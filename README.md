@@ -1,8 +1,40 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-# Getting Started
+# 🚀 React Native Authentication App
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+> A complete React Native app with authentication, user management, and real API integration.
+
+## 📚 Documentation
+
+- **[📊 Complete Dataflow Documentation](./DATAFLOW.md)** - Detailed architecture and dataflow guide
+- **[⚡ Quick Reference Guide](./QUICK_REFERENCE.md)** - Code snippets and common patterns
+
+## ✨ Features
+
+- 🔐 **Complete Authentication Flow** - Login, logout, and session management
+- 💾 **Persistent State** - Encrypted storage with MMKV (30x faster than AsyncStorage)
+- 🔄 **Real API Integration** - JSONPlaceholder for user data
+- ⚡ **React Query** - Smart caching and automatic refetching
+- 🎨 **Modern UI** - Clean, professional design with loading states
+- 🔒 **Protected Routes** - Auto-redirect based on authentication
+- 🚀 **Auto Token Injection** - Axios interceptor for seamless API calls
+- 📱 **Pull to Refresh** - Refresh user data with swipe gesture
+- ⚙️ **Redux Toolkit** - Predictable state management
+- 🎯 **TypeScript Ready** - Structured for easy TS migration
+
+## 🏗️ Tech Stack
+
+| Technology         | Purpose                 |
+| ------------------ | ----------------------- |
+| React Native 0.83  | Mobile framework        |
+| Redux Toolkit      | Global state management |
+| React Query        | Server state & caching  |
+| React Navigation 7 | Navigation & routing    |
+| MMKV               | Fast encrypted storage  |
+| Axios              | HTTP client             |
+| JSONPlaceholder    | Mock REST API           |
+
+## 🚀 Getting Started
 
 ## Step 1: Start Metro
 
