@@ -5,7 +5,6 @@ export const loginAPI = async (credentials) => {
 
   const { email, password } = credentials;
 
-  // Simulate server-side validation
   if (!email || !password) {
     throw new Error('Email and password are required');
   }
@@ -22,10 +21,10 @@ export const loginAPI = async (credentials) => {
     token: `Bearer_${Math.random().toString(36).substring(7)}_${Date.now()}`,
     user: {
       id: Math.floor(Math.random() * 1000) + 1,
-      name: email.split('@')[0], // Generate name from email
+      name: email.split('@')[0], 
       email: email,
-      avatar: `https://i.pravatar.cc/150?u=${email}`, // Consistent avatar based on email
-      role: email.includes('admin') ? 'admin' : 'user', // Dynamic role assignment
+      avatar: `https://i.pravatar.cc/150?u=${email}`, 
+      role: email.includes('admin') ? 'admin' : 'user', 
       createdAt: new Date().toISOString(),
     },
   };
@@ -34,11 +33,7 @@ export const loginAPI = async (credentials) => {
 };
 
 export const logoutAPI = async () => {
-  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // --- REAL API CALL WOULD GO HERE ---
-  // await api.post('/logout');
   
   return { success: true };
 };
@@ -51,7 +46,6 @@ export const getUserProfileAPI = async () => {
     throw new Error(error.response?.data?.message || 'Failed to fetch profile');
   }
 };
-
 
 export const updateUserProfileAPI = async (userData) => {
   try {

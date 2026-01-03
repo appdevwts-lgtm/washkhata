@@ -1,10 +1,10 @@
-import React from 'react';
+import React from 'react'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import TabNavigator from './TabNavigator';
 import HomeScreen from './screen/HomeScreen';
 import LoginScreen from './screen/LoginScreen';
-import { Text, View } from 'react-native';
+import RegisterScreen from './screen/RegisterScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -17,6 +17,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="Login"
         component={LoginScreen }
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen }
         options={{ headerShown: false }}
       />
 
