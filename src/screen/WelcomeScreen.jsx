@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,121 +7,345 @@ import {
   StatusBar,
   Animated,
   Dimensions,
+  ScrollView,
+  Platform,
 } from 'react-native';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Video from 'react-native-video';
+import { useIsFocused } from '@react-navigation/native';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const isSmallDevice = width < 375;
+const isTablet = width >= 768;
 
-const WelcomeScreen = ({navigation}) => {
+const WelcomeScreen = ({ navigation }) => {
+  const isFocused = useIsFocused();
+  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const logoScale = useRef(new Animated.Value(0.5)).current;
+  const iconAnim1 = useRef(new Animated.Value(0)).current;
+  const iconAnim2 = useRef(new Animated.Value(0)).current;
+  const iconAnim3 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
+    // Staggered animations
+    Animated.sequence([
+      // Logo animation
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(logoScale, {
+          toValue: 1,
+          tension: 60,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+
+      // Feature icons staggered animations
+      Animated.stagger(200, [
+        Animated.spring(iconAnim1, {
+          toValue: 1,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(iconAnim2, {
+          toValue: 1,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(iconAnim3, {
+          toValue: 1,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
   }, []);
 
+  const handleGetStarted = () => {
+    navigation.navigate('Login');
+  };
+
+  // SVG Icons
+  const WashIcon = () => (
+    <Svg
+      width={isTablet ? 40 : isSmallDevice ? 24 : 32}
+      height={isTablet ? 40 : isSmallDevice ? 24 : 32}
+      viewBox="0 0 32 32"
+    >
+      <Path
+        d="M26 6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"
+        fill="none"
+        stroke="#000"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={16} cy={16} r={4} fill="#000" />
+      <Path
+        d="M10 6v6M22 6v6"
+        fill="none"
+        stroke="#000"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+
+  const TrackIcon = () => (
+    <Svg
+      width={isTablet ? 40 : isSmallDevice ? 24 : 32}
+      height={isTablet ? 40 : isSmallDevice ? 24 : 32}
+      viewBox="0 0 32 32"
+    >
+      <Path
+        d="M16 6a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S6 21.52 6 16 10.48 6 16 6z"
+        fill="none"
+        stroke="#000"
+        strokeWidth={2}
+      />
+      <Path
+        d="M16 10v6l4 2"
+        fill="none"
+        stroke="#000"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={16} cy={16} r={1} fill="#000" />
+    </Svg>
+  );
+
+  const DeliveryIcon = () => (
+    <Svg
+      width={isTablet ? 40 : isSmallDevice ? 24 : 32}
+      height={isTablet ? 40 : isSmallDevice ? 24 : 32}
+      viewBox="0 0 32 32"
+    >
+      <Path
+        d="M24 12h4l-4 8h-4"
+        fill="none"
+        stroke="#000"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={10} cy={20} r={2} fill="#000" />
+      <Circle cx={22} cy={20} r={2} fill="#000" />
+      <Path
+        d="M4 16h12M4 8h12"
+        fill="none"
+        stroke="#000"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Rect
+        x={2}
+        y={4}
+        width={16}
+        height={4}
+        rx={1}
+        fill="#000"
+        opacity={0.3}
+      />
+    </Svg>
+  );
+
+  const LogoIcon = () => (
+    <Svg
+      width={isTablet ? 120 : isSmallDevice ? 70 : 100}
+      height={isTablet ? 120 : isSmallDevice ? 70 : 100}
+      viewBox="0 0 100 100"
+    >
+      <Circle cx={50} cy={50} r={48} fill="#000" />
+      <Rect x={30} y={30} width={40} height={40} rx={8} fill="#fff" />
+      <Path
+        d="M40 45l5-5 5 5 5-5 5 5M40 55l5-5 5 5 5-5 5 5M40 65l5-5 5 5 5-5 5 5"
+        stroke="#000"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Circle cx={65} cy={35} r={3} fill="#fff" />
+    </Svg>
+  );
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      {/* Decorative elements */}
-      <View style={styles.decorCircle1} />
-      <View style={styles.decorCircle2} />
-      <View style={styles.decorCircle3} />
-      <View style={styles.decorLine1} />
-      <View style={styles.decorLine2} />
-      <View style={styles.decorLine3} />
-      <View style={styles.decorDot1} />
-      <View style={styles.decorDot2} />
-      <View style={styles.decorDot3} />
-      <View style={styles.decorSquare1} />
-      <View style={styles.decorSquare2} />
+      <Video
+        source={require('../assets/welcome.mp4')}
+        style={styles.backgroundVideo}
+        resizeMode="cover"
+        paused={!isFocused}
+        repeat={true}
+        muted
+        volume={0}
+      />
+      <View style={styles.overlay} />
 
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{translateY: slideAnim}, {scale: scaleAnim}],
-          },
-        ]}>
-        {/* Logo/Brand Area */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <View style={styles.logoInnerCircle} />
-          </View>
-          <Text style={styles.brandName}>YourApp</Text>
-        </View>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }, { scale: logoScale }],
+            },
+          ]}
+        >
+          <LogoIcon />
+          <Text style={styles.brandName}>WashKhata</Text>
+          <Text style={styles.tagline}>Smart Laundry Management</Text>
+        </Animated.View>
 
-        {/* Main Content */}
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Welcome to</Text>
-          <Text style={styles.titleBold}>Modern Experience</Text>
-          <Text style={styles.subtitle}>
-            Discover a new way to connect, create, and collaborate with our
-            beautifully designed platform.
+        {/* Spacer to push content to bottom */}
+        <View style={styles.spacer} />
+
+        {/* Bottom Section */}
+        <Animated.View
+          style={[
+            styles.bottomSection,
+            {
+              opacity: fadeAnim,
+              transform: [
+                {
+                  translateY: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.welcomeText}>Welcome to</Text>
+          <Text style={styles.appName}>WashKhata</Text>
+          <Text style={styles.description}>
+            Track your laundry from pickup to delivery.{'\n'}
+            Schedule washes, get real-time updates,{'\n'}
+            and manage all in one app.
           </Text>
-        </View>
 
-        {/* Feature Highlights */}
-        <View style={styles.featuresContainer}>
-          <View style={styles.featureItem}>
-            <View style={styles.featureIcon}>
-              <View style={styles.featureIconInner} />
-            </View>
-            <Text style={styles.featureText}>Secure & Private</Text>
+          {/* Features */}
+          <View style={styles.featuresContainer}>
+            <Animated.View
+              style={[
+                styles.featureItem,
+                {
+                  transform: [
+                    {
+                      scale: iconAnim1.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.8, 1],
+                      }),
+                    },
+                  ],
+                  opacity: iconAnim1,
+                },
+              ]}
+            >
+              <View style={styles.featureIconWrapper}>
+                <WashIcon />
+              </View>
+              <Text style={styles.featureTitle}>Professional</Text>
+              <Text style={styles.featureSubtitle}>Wash & Fold</Text>
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.featureItem,
+                {
+                  transform: [
+                    {
+                      scale: iconAnim2.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.8, 1],
+                      }),
+                    },
+                  ],
+                  opacity: iconAnim2,
+                },
+              ]}
+            >
+              <View style={styles.featureIconWrapper}>
+                <TrackIcon />
+              </View>
+              <Text style={styles.featureTitle}>Real-time</Text>
+              <Text style={styles.featureSubtitle}>Tracking</Text>
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.featureItem,
+                {
+                  transform: [
+                    {
+                      scale: iconAnim3.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.8, 1],
+                      }),
+                    },
+                  ],
+                  opacity: iconAnim3,
+                },
+              ]}
+            >
+              <View style={styles.featureIconWrapper}>
+                <DeliveryIcon />
+              </View>
+              <Text style={styles.featureTitle}>Fast</Text>
+              <Text style={styles.featureSubtitle}>Delivery</Text>
+            </Animated.View>
           </View>
 
-          <View style={styles.featureItem}>
-            <View style={styles.featureIcon}>
-              <View style={styles.featureIconInner} />
-            </View>
-            <Text style={styles.featureText}>Fast & Reliable</Text>
-          </View>
-
-          <View style={styles.featureItem}>
-            <View style={styles.featureIcon}>
-              <View style={styles.featureIconInner} />
-            </View>
-            <Text style={styles.featureText}>Easy to Use</Text>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.getStartedButton}
-            onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.getStartedButtonText}>Get Started</Text>
+            onPress={handleGetStarted}
+            activeOpacity={0.9}
+          >
+            <Text style={styles.getStartedText}>Get Started</Text>
+            <View style={styles.arrowIcon}>
+              <Svg width={20} height={20} viewBox="0 0 24 24">
+                <Path
+                  d="M5 12h14M12 5l7 7-7 7"
+                  stroke="#fff"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </Svg>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.loginButtonText}>I already have an account</Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-
-      {/* Bottom Decoration */}
-      <View style={styles.bottomWave} />
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              By continuing, you agree to our{'\n'}
+              <Text style={styles.link}>Terms of Service</Text> and{' '}
+              <Text style={styles.link}>Privacy Policy</Text>
+            </Text>
+          </View>
+        </Animated.View>
+      </ScrollView>
     </View>
   );
 };
@@ -129,259 +353,159 @@ const WelcomeScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#ffffff',
   },
-  decorCircle1: {
-    position: 'absolute',
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    top: -150,
-    right: -150,
-  },
-  decorCircle2: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    bottom: -100,
-    left: -100,
-  },
-  decorCircle3: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    top: height * 0.3,
-    right: 30,
-  },
-  decorLine1: {
-    position: 'absolute',
-    width: 120,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    top: 150,
-    left: 30,
-    transform: [{rotate: '45deg'}],
-  },
-  decorLine2: {
-    position: 'absolute',
-    width: 100,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    bottom: 200,
-    right: 50,
-    transform: [{rotate: '-45deg'}],
-  },
-  decorLine3: {
-    position: 'absolute',
-    width: 80,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    top: height * 0.5,
-    left: 50,
-    transform: [{rotate: '90deg'}],
-  },
-  decorDot1: {
-    position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    top: 120,
-    right: 60,
-  },
-  decorDot2: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    bottom: 180,
-    left: 70,
-  },
-  decorDot3: {
-    position: 'absolute',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    top: height * 0.4,
-    left: 40,
-  },
-  decorSquare1: {
-    position: 'absolute',
-    width: 15,
-    height: 15,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    top: height * 0.25,
-    left: width * 0.15,
-    transform: [{rotate: '45deg'}],
-  },
-  decorSquare2: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    bottom: height * 0.35,
-    right: width * 0.2,
-    transform: [{rotate: '45deg'}],
-  },
-  bottomWave: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    maxWidth: 500,
-    width: '100%',
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 50,
-  },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    elevation: 10,
-    shadowColor: '#fff',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
-  logoInnerCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#000',
+    marginTop: isTablet ? 40 : isSmallDevice ? 20 : 30,
+    paddingHorizontal: 20,
   },
   brandName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 2,
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '300',
-    color: '#fff',
-    letterSpacing: 1,
-  },
-  titleBold: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 16,
+    fontSize: isTablet ? 44 : isSmallDevice ? 28 : 36,
+    fontWeight: '800',
+    color: '#000',
+    marginTop: isTablet ? 20 : isSmallDevice ? 10 : 16,
     letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 10,
+  tagline: {
+    fontSize: isTablet ? 18 : isSmallDevice ? 12 : 14,
+    color: '#666',
+    marginTop: 4,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+  contentContainer: {
+    alignItems: 'center',
+    paddingHorizontal: isTablet ? 60 : isSmallDevice ? 20 : 30,
+    marginTop: isTablet ? 30 : isSmallDevice ? 15 : 20,
   },
   featuresContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 50,
+    maxWidth: 400,
+    marginBottom: isTablet ? 20 : isSmallDevice ? 12 : 16,
   },
   featureItem: {
     alignItems: 'center',
     flex: 1,
+    paddingHorizontal: isSmallDevice ? 4 : 8,
   },
-  featureIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  featureIconWrapper: {
+    width: isTablet ? 80 : isSmallDevice ? 50 : 64,
+    height: isTablet ? 80 : isSmallDevice ? 50 : 64,
+    borderRadius: isTablet ? 40 : isSmallDevice ? 25 : 32,
+    backgroundColor: '#f8f8f8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: isTablet ? 16 : isSmallDevice ? 8 : 12,
+    borderWidth: 1,
+    borderColor: '#000000ff',
   },
-  featureIconInner: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+  featureTitle: {
+    fontSize: isTablet ? 18 : isSmallDevice ? 12 : 14,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 2,
   },
-  featureText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+  featureSubtitle: {
+    fontSize: isTablet ? 14 : isSmallDevice ? 10 : 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  spacer: {
+    flex: 1,
+    minHeight: isTablet ? 40 : isSmallDevice ? 20 : 30,
+  },
+  bottomSection: {
+    paddingHorizontal: isTablet ? 60 : isSmallDevice ? 20 : 30,
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: isTablet ? 24 : isSmallDevice ? 16 : 20,
+    color: '#666',
+    fontWeight: '300',
+    marginBottom: 4,
+  },
+  appName: {
+    fontSize: isTablet ? 48 : isSmallDevice ? 32 : 40,
+    fontWeight: '800',
+    color: '#000',
+    marginBottom: isTablet ? 30 : isSmallDevice ? 12 : 20,
+  },
+  description: {
+    fontSize: isTablet ? 20 : isSmallDevice ? 13 : 16,
+    color: '#444',
     textAlign: 'center',
-    fontWeight: '600',
-  },
-  buttonContainer: {
-    width: '100%',
-    marginTop: 20,
+    lineHeight: isTablet ? 30 : isSmallDevice ? 19 : 24,
+    marginBottom: isTablet ? 30 : isSmallDevice ? 15 : 20,
+    fontWeight: '400',
   },
   getStartedButton: {
     width: '100%',
-    height: 56,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    maxWidth: 400,
+    height: isTablet ? 68 : isSmallDevice ? 52 : 60,
+    backgroundColor: '#000',
+    borderRadius: isTablet ? 20 : isSmallDevice ? 14 : 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    elevation: 5,
-    shadowColor: '#fff',
-    shadowOffset: {width: 0, height: 2},
+    flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowRadius: 8,
+    elevation: 8,
+    marginBottom: isTablet ? 20 : isSmallDevice ? 12 : 16,
   },
-  getStartedButtonText: {
-    color: '#000',
-    fontSize: 16,
+  getStartedText: {
+    color: '#fff',
+    fontSize: isTablet ? 22 : isSmallDevice ? 16 : 18,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    marginRight: 12,
   },
-  loginButton: {
-    width: '100%',
-    height: 56,
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  arrowIcon: {
+    width: isTablet ? 32 : isSmallDevice ? 24 : 28,
+    height: isTablet ? 32 : isSmallDevice ? 24 : 28,
+    borderRadius: isTablet ? 16 : isSmallDevice ? 12 : 14,
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 15,
+  footer: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: isTablet ? 20 : isSmallDevice ? 12 : 16,
+  },
+  footerText: {
+    fontSize: isTablet ? 14 : isSmallDevice ? 10 : 12,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: isTablet ? 20 : isSmallDevice ? 14 : 16,
+  },
+  link: {
+    color: '#000',
     fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  backgroundVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    width: width,
+    height: height,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.83)', 
   },
 });
 

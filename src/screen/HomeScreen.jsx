@@ -1,326 +1,431 @@
+import React, { useRef, useState } from 'react';
 import {
+  SafeAreaView,
+  ScrollView,
   View,
   Text,
+  Image,
+  TouchableOpacity,
+  Dimensions,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  Image,
-  Alert,
 } from 'react-native';
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-// import AppSafeArea from '../components/AppSafeArea';
-import { useUsers } from '../hooks/queries/useUsers';
-import { logout } from '../features/auth/authSlice';
 
-export default function HomeScreen({ navigation }) {
-  const dispatch = useDispatch();
-  const { user, isAuthenticated } = useSelector(state => state.auth);
-  const { data: users, isLoading, isError, error, refetch, isRefetching } = useUsers();
+const { width } = Dimensions.get('window');
 
-  // Navigate to login if not authenticated
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigation.replace('Login');
+const App = () => {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const flatListRef = useRef(null);
+
+  const carouselData = [
+    {
+      id: '1',
+      title: 'Mount Laundry',
+      subtitle: 'Your clothes will reach you in 2 days!',
+      image:
+        'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400',
+    },
+    {
+      id: '2',
+      title: 'Quick Service',
+      subtitle: 'Fast and reliable laundry service',
+      image:
+        'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400',
+    },
+    {
+      id: '3',
+      title: 'Premium Care',
+      subtitle: 'Your garments deserve the best',
+      image:
+        'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400',
+    },
+  ];
+
+  const topRatedData = [
+    {
+      id: '1',
+      name: 'Washing',
+      location: 'Resort Road',
+      rating: '4.9',
+      image:
+        'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=300',
+    },
+    {
+      id: '2',
+      name: 'Drying',
+      location: 'Gombly',
+      rating: '4.8',
+      image:
+        'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=300',
+    },
+    {
+      id: '3',
+      name: 'Ironing',
+      location: 'Downtown',
+      rating: '4.7',
+      image: 'https://images.unsplash.com/photo-1545173168-9f1947eebb8f?w=300',
+    },
+    {
+      id: '4',
+      name: 'Starching',
+      location: 'Uptown',
+      rating: '4.9',
+      image:
+        'https://images.unsplash.com/photo-1521656693072-a8333fd5d533?w=300',
+    },
+  ];
+
+  const dealsData = [
+    {
+      id: '1',
+      title: 'Welcome offer!',
+      subtitle: 'Get 50% off on your first order',
+    },
+    {
+      id: '2',
+      title: 'Weekend Special',
+      subtitle: 'Extra 20% off on weekends',
+    },
+  ];
+
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      setActiveSlide(viewableItems[0].index || 0);
     }
-  }, [isAuthenticated, navigation]);
+  }).current;
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(logout());
-            navigation.replace('Login');
-          },
-        },
-      ]
-    );
-  };
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
 
-  const renderUserCard = ({ item }) => (
-    <View style={styles.userCard}>
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userEmail}>{item.email}</Text>
-        <View style={styles.badgeContainer}>
-          <View style={[styles.badge, item.status === 'active' ? styles.activeBadge : styles.inactiveBadge]}>
-            <Text style={styles.badgeText}>{item.status}</Text>
-          </View>
-        </View>
+  const renderCarouselItem = ({ item }) => (
+    <View style={styles.carouselItem}>
+      <Image source={{ uri: item.image }} style={styles.carouselImage} />
+      <View style={styles.carouselTextContainer}>
+        <Image
+          source={{
+            uri: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=100',
+          }}
+          style={styles.carouselIcon}
+        />
+        <Text style={styles.carouselTitle}>{item.title}</Text>
+        <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
       </View>
     </View>
   );
 
+  const renderTopRatedItem = ({ item }) => (
+    <View style={styles.topRatedCard}>
+      <Image source={{ uri: item.image }} style={styles.topRatedImage} />
+      <View style={styles.topRatedInfo}>
+        <Text style={styles.topRatedName}>{item.name}</Text>
+        <Text style={styles.topRatedLocation}>📍 {item.location}</Text>
+      </View>
+      {/* <View style={styles.ratingBadge}>
+        <Text style={styles.ratingText}>⭐ {item.rating}</Text>
+      </View> */}
+    </View>
+  );
+
+  const renderDealItem = ({ item }) => (
+    <View style={styles.dealCard}>
+      <Text style={styles.dealTitle}>{item.title}</Text>
+      <Text style={styles.dealSubtitle}>{item.subtitle}</Text>
+    </View>
+  );
+
   return (
-     <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Hello,</Text>
-            <Text style={styles.userName}>{user?.name || 'User'}</Text>
-          </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.channelBadge}>
+          <Text style={styles.channelText}> Location</Text>
         </View>
+        <TouchableOpacity style={styles.helpButton}>
+          <Text style={styles.helpText}>?</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* User Profile Card */}
-        <View style={styles.profileCard}>
-          <Image
-            source={{ uri: user?.avatar || 'https://i.pravatar.cc/150' }}
-            style={styles.profileAvatar}
+      {/* <View style={styles.searchContainer}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <Text style={styles.searchPlaceholder}>Search</Text>
+      </View> */}
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Carousel */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={carouselData}
+            renderItem={renderCarouselItem}
+            keyExtractor={item => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            snapToInterval={width - 40}
+            snapToAlignment="center"
+            decelerationRate="fast"
+            contentContainerStyle={styles.carouselListContent}
           />
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name}</Text>
-            <Text style={styles.profileEmail}>{user?.email}</Text>
-            <Text style={styles.profileRole}>Role: {user?.role || 'User'}</Text>
+          <View style={styles.pagination}>
+            {carouselData.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  activeSlide === index && styles.paginationDotActive,
+                ]}
+              />
+            ))}
           </View>
         </View>
 
-        {/* Users List Header */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>All Users</Text>
-          <Text style={styles.sectionSubtitle}>From Random API</Text>
+        {/* Top Rated */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Sevices</Text>
+            {/* <TouchableOpacity>
+              <Text style={styles.viewMore}>View more</Text>
+            </TouchableOpacity> */}
+          </View>
+          <FlatList
+            data={topRatedData}
+            renderItem={renderTopRatedItem}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            scrollEnabled={false}
+            columnWrapperStyle={styles.topRatedColumnWrapper}
+            contentContainerStyle={styles.topRatedListContent}
+          />
         </View>
 
-        {/* Users List */}
-        {isLoading && !isRefetching ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#ff3b30" />
-            <Text style={styles.loadingText}>Loading users...</Text>
-          </View>
-        ) : isError ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorEmoji}>⚠️</Text>
-            <Text style={styles.errorText}>{error?.message || 'Failed to load users'}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+        {/* Deals and Offers */}
+        {/* <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Deals and offers</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewMore}>View more</Text>
             </TouchableOpacity>
           </View>
-        ) : (
           <FlatList
-            data={users}
-            renderItem={renderUserCard}
-            keyExtractor={item => item.id.toString()}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefetching}
-                onRefresh={refetch}
-                tintColor="#ff3b30"
-                colors={['#ff3b30']}
-              />
-            }
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyEmoji}>👥</Text>
-                <Text style={styles.emptyText}>No users found</Text>
-              </View>
-            }
+            data={dealsData}
+            renderItem={renderDealItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
           />
-        )}
-      </View>
+        </View> */}
+      </ScrollView>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#000',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  greeting: {
-    fontSize: 14,
-    color: '#666',
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  logoutButton: {
-    backgroundColor: '#ff3b30',
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 15,
   },
-  logoutText: {
+  channelBadge: {
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  channelText: {
     color: '#fff',
-    fontWeight: '600',
     fontSize: 14,
+    fontWeight: '500',
   },
-  profileCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    margin: 20,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  profileAvatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 16,
-  },
-  profileInfo: {
-    flex: 1,
+  helpButton: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
   },
-  profileName: {
+  helpText: {
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
   },
-  profileEmail: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  profileRole: {
-    fontSize: 12,
-    color: '#ff3b30',
-    fontWeight: '600',
-  },
-  sectionHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  userCard: {
+  searchContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    marginHorizontal: 20,
+    marginVertical: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
-  avatar: {
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 10,
+  },
+  searchPlaceholder: {
+    color: '#666',
+    fontSize: 16,
+  },
+  content: {
+    flex: 1,
+  },
+  carouselContainer: {
+    marginVertical: 20,
+  },
+  carouselListContent: {
+    paddingHorizontal: 20,
+  },
+  carouselItem: {
+    width: width - 40,
+    height: 200,
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginRight: 15,
+    backgroundColor: '#1a1a1a',
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    opacity: 0.3,
+  },
+  carouselTextContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'flex-end',
+  },
+  carouselIcon: {
     width: 50,
     height: 50,
-    borderRadius: 25,
-    marginRight: 12,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  userInfo: {
-    flex: 1,
+  carouselTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  carouselSubtitle: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  pagination: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
   },
-  userEmail: {
-    fontSize: 12,
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#333',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#fff',
+    width: 20,
+  },
+  section: {
+    marginTop: 20,
+    paddingBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  viewMore: {
     color: '#666',
-    marginTop: 2,
+    fontSize: 14,
   },
-  badgeContainer: {
-    marginTop: 6,
+  horizontalList: {
+    paddingHorizontal: 20,
   },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
+  topRatedCard: {
+    width: (width - 55) / 2, // (width - 40 (padding) - 15 (gap)) / 2
+    backgroundColor: '#1a1a1a',
+    borderRadius: 15, // Increased border radius for better look
+    overflow: 'hidden',
+    // marginRight is removed as space-between handles it
+  },
+  topRatedImage: {
+    width: '100%',
+    height: 120,
+  },
+  topRatedInfo: {
+    padding: 12,
+  },
+  topRatedName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  topRatedLocation: {
+    color: '#666',
+    fontSize: 12,
+  },
+  ratingBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  activeBadge: {
-    backgroundColor: '#d4edda',
-  },
-  inactiveBadge: {
-    backgroundColor: '#f8d7da',
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  errorEmoji: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#ff3b30',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
+  ratingText: {
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  emptyContainer: {
-    flex: 1,
+  dealCard: {
+    width: 200,
+    height: 100,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 15,
+    padding: 15,
+    marginRight: 15,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
   },
-  emptyEmoji: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  emptyText: {
+  dealTitle: {
+    color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  dealSubtitle: {
     color: '#666',
-    textAlign: 'center',
+    fontSize: 12,
+  },
+  topRatedListContent: {
+    paddingHorizontal: 20,
+  },
+  topRatedColumnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 15,
   },
 });
+
+export default App;
