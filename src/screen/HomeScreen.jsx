@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   View,
   Text,
@@ -9,13 +8,22 @@ import {
   Dimensions,
   StyleSheet,
   FlatList,
+  StatusBar,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
+const ITEM_WIDTH = width - 40;
+const ITEM_SPACING = 15;
 
 const App = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef(null);
+  const autoPlayTimer = useRef(null);
+  const scrolling = useRef(false);
 
   const carouselData = [
     {
@@ -24,6 +32,7 @@ const App = () => {
       subtitle: 'Your clothes will reach you in 2 days!',
       image:
         'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400',
+      gradient: ['rgba(99, 102, 241, 0.9)', 'rgba(168, 85, 247, 0.9)'],
     },
     {
       id: '2',
@@ -31,6 +40,7 @@ const App = () => {
       subtitle: 'Fast and reliable laundry service',
       image:
         'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400',
+      gradient: ['rgba(236, 72, 153, 0.9)', 'rgba(239, 68, 68, 0.9)'],
     },
     {
       id: '3',
@@ -38,6 +48,7 @@ const App = () => {
       subtitle: 'Your garments deserve the best',
       image:
         'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400',
+      gradient: ['rgba(34, 197, 94, 0.9)', 'rgba(20, 184, 166, 0.9)'],
     },
   ];
 
@@ -47,6 +58,9 @@ const App = () => {
       name: 'Washing',
       location: 'Resort Road',
       rating: '4.9',
+      price: '₹99',
+      icon: 'washing-machine',
+      color: '#3B82F6',
       image:
         'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=300',
     },
@@ -55,6 +69,9 @@ const App = () => {
       name: 'Drying',
       location: 'Gombly',
       rating: '4.8',
+      price: '₹79',
+      icon: 'tumble-dryer',
+      color: '#EC4899',
       image:
         'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=300',
     },
@@ -63,91 +80,193 @@ const App = () => {
       name: 'Ironing',
       location: 'Downtown',
       rating: '4.7',
-      image: 'https://images.unsplash.com/photo-1545173168-9f1947eebb8f?w=300',
+      price: '₹89',
+      icon: 'iron',
+      color: '#F59E0B',
+      image: 'https://cdn.pixabay.com/photo/2021/02/02/12/41/iron-5973861_1280.jpg',
     },
     {
       id: '4',
       name: 'Starching',
       location: 'Uptown',
       rating: '4.9',
+      price: '₹69',
+      icon: 'spray',
+      color: '#8B5CF6',
       image:
         'https://images.unsplash.com/photo-1521656693072-a8333fd5d533?w=300',
     },
   ];
 
-  const dealsData = [
-    {
-      id: '1',
-      title: 'Welcome offer!',
-      subtitle: 'Get 50% off on your first order',
-    },
-    {
-      id: '2',
-      title: 'Weekend Special',
-      subtitle: 'Extra 20% off on weekends',
-    },
-  ];
+  // Auto-play functionality
+  useEffect(() => {
+    startAutoPlay();
+    return () => {
+      stopAutoPlay();
+    };
+  }, []);
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      setActiveSlide(viewableItems[0].index || 0);
+  const startAutoPlay = () => {
+    stopAutoPlay();
+    autoPlayTimer.current = setInterval(() => {
+      if (!scrolling.current) {
+        goToNextSlide();
+      }
+    }, 3000);
+  };
+
+  const stopAutoPlay = () => {
+    if (autoPlayTimer.current) {
+      clearInterval(autoPlayTimer.current);
+      autoPlayTimer.current = null;
     }
-  }).current;
+  };
 
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
-  }).current;
+  const goToNextSlide = () => {
+    setActiveSlide(prevSlide => {
+      const nextSlide = (prevSlide + 1) % carouselData.length;
+
+      const offset = nextSlide * (ITEM_WIDTH + ITEM_SPACING);
+
+      flatListRef.current?.scrollToOffset({
+        offset: offset,
+        animated: true,
+      });
+
+      return nextSlide;
+    });
+  };
+
+  const onScrollBeginDrag = () => {
+    scrolling.current = true;
+    stopAutoPlay();
+  };
+
+  const onScrollEndDrag = () => {
+    scrolling.current = false;
+  };
+
+  const onMomentumScrollBegin = () => {
+    scrolling.current = true;
+  };
+
+  const onMomentumScrollEnd = event => {
+    scrolling.current = false;
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffsetX / (ITEM_WIDTH + ITEM_SPACING));
+
+    setActiveSlide(index);
+    startAutoPlay();
+  };
+
+  const getItemLayout = (data, index) => ({
+    length: ITEM_WIDTH + ITEM_SPACING,
+    offset: (ITEM_WIDTH + ITEM_SPACING) * index,
+    index,
+  });
 
   const renderCarouselItem = ({ item }) => (
     <View style={styles.carouselItem}>
       <Image source={{ uri: item.image }} style={styles.carouselImage} />
+      <View
+        style={[styles.gradientOverlay, { backgroundColor: item.gradient[0] }]}
+      />
       <View style={styles.carouselTextContainer}>
-        <Image
-          source={{
-            uri: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=100',
-          }}
-          style={styles.carouselIcon}
-        />
+        <View style={styles.offerBadge}>
+          <Icon name="tag" size={14} color="#fff" style={{ marginRight: 4 }} />
+          <Text style={styles.offerText}>50% OFF</Text>
+        </View>
         <Text style={styles.carouselTitle}>{item.title}</Text>
         <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
+        <TouchableOpacity style={styles.bookButton}>
+          <Text style={styles.bookButtonText}>Book Now</Text>
+          <Feather
+            name="arrow-right"
+            size={16}
+            color="#111827"
+            style={{ marginLeft: 6 }}
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );
 
   const renderTopRatedItem = ({ item }) => (
-    <View style={styles.topRatedCard}>
-      <Image source={{ uri: item.image }} style={styles.topRatedImage} />
+    <TouchableOpacity style={styles.topRatedCard} activeOpacity={0.7}>
+      <View style={styles.cardImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.topRatedImage} />
+        <View style={[styles.iconBadge, { backgroundColor: item.color }]}>
+          <Icon name={item.icon} size={22} color="#fff" />
+        </View>
+        {/* <View style={styles.ratingBadge}>
+          <Ionicons
+            name="star"
+            size={12}
+            color="#FBBF24"
+            style={{ marginRight: 2 }}
+          />
+          <Text style={styles.ratingText}>{item.rating}</Text>
+        </View> */}
+      </View>
       <View style={styles.topRatedInfo}>
         <Text style={styles.topRatedName}>{item.name}</Text>
-        <Text style={styles.topRatedLocation}>📍 {item.location}</Text>
+        <View style={styles.locationContainer}>
+          <Ionicons name="location" size={14} color="#6B7280" />
+          <Text style={styles.topRatedLocation}>{item.location}</Text>
+        </View>
+        {/* <View style={styles.priceContainer}>
+          <Text style={styles.priceText}>{item.price}</Text>
+          <Text style={styles.perItemText}>/item</Text>
+        </View> */}
       </View>
-      {/* <View style={styles.ratingBadge}>
-        <Text style={styles.ratingText}>⭐ {item.rating}</Text>
-      </View> */}
-    </View>
-  );
-
-  const renderDealItem = ({ item }) => (
-    <View style={styles.dealCard}>
-      <Text style={styles.dealTitle}>{item.title}</Text>
-      <Text style={styles.dealSubtitle}>{item.subtitle}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor='#fff' barStyle='dark-content'/>
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.channelBadge}>
-          <Text style={styles.channelText}> Location</Text>
+        <View>
+          <TouchableOpacity style={styles.locationBadge}>
+            <Ionicons
+              name="location"
+              size={16}
+              color="#111827"
+              style={{ marginRight: 4 }}
+            />
+            <Text style={styles.locationText}>Ghaziabad, UP</Text>
+            <Ionicons
+              name="chevron-down"
+              size={14}
+              color="#6B7280"
+              style={{ marginLeft: 4 }}
+            />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.helpButton}>
-          <Text style={styles.helpText}>?</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={22} color="#374151" />
+            <View style={styles.notificationDot} />
+          </TouchableOpacity>
+          {/* <TouchableOpacity style={styles.profileButton}>
+            <Ionicons name="person" size={20} color="#fff" />
+          </TouchableOpacity> */}
+        </View>
       </View>
 
+      {/* Search Bar */}
       {/* <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <Text style={styles.searchPlaceholder}>Search</Text>
+        <Feather
+          name="search"
+          size={20}
+          color="#9CA3AF"
+          style={{ marginRight: 10 }}
+        />
+        <Text style={styles.searchPlaceholder}>Search for services...</Text>
+        <TouchableOpacity style={styles.filterButton}>
+          <Ionicons name="options-outline" size={20} color="#6B7280" />
+        </TouchableOpacity>
       </View> */}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -161,12 +280,17 @@ const App = () => {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-            snapToInterval={width - 40}
-            snapToAlignment="center"
+            snapToInterval={ITEM_WIDTH + ITEM_SPACING}
+            snapToAlignment="start"
             decelerationRate="fast"
             contentContainerStyle={styles.carouselListContent}
+            onScrollBeginDrag={onScrollBeginDrag}
+            onScrollEndDrag={onScrollEndDrag}
+            onMomentumScrollBegin={onMomentumScrollBegin}
+            onMomentumScrollEnd={onMomentumScrollEnd}
+            getItemLayout={getItemLayout}
+            removeClippedSubviews={false}
+            scrollEventThrottle={16}
           />
           <View style={styles.pagination}>
             {carouselData.map((_, index) => (
@@ -184,9 +308,18 @@ const App = () => {
         {/* Top Rated */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Sevices</Text>
-            {/* <TouchableOpacity>
-              <Text style={styles.viewMore}>View more</Text>
+            <View>
+              <Text style={styles.sectionTitle}>Our Services</Text>
+              <Text style={styles.sectionSubtitle}>Choose what you need</Text>
+            </View>
+            {/* <TouchableOpacity style={styles.viewMoreButton}>
+              <Text style={styles.viewMoreText}>View All</Text>
+              <Feather
+                name="arrow-right"
+                size={14}
+                color="#6366F1"
+                style={{ marginLeft: 4 }}
+              />
             </TouchableOpacity> */}
           </View>
           <FlatList
@@ -200,23 +333,8 @@ const App = () => {
           />
         </View>
 
-        {/* Deals and Offers */}
-        {/* <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Deals and offers</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewMore}>View more</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={dealsData}
-            renderItem={renderDealItem}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-          />
-        </View> */}
+        {/* Bottom Spacing */}
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -225,102 +343,171 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 10,
+    paddingBottom: 15,
+    backgroundColor: '#fff',
+    borderBottomColor:'#d1d1d1ff',
+    borderBottomWidth:1,
+  
   },
-  channelBadge: {
-    backgroundColor: '#1a1a1a',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+  greetingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
   },
-  channelText: {
-    color: '#fff',
+  locationText: {
+    color: '#111827',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  helpButton: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#1a1a1a',
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
+    position: 'relative',
   },
-  helpText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#6366F1',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#fff',
     marginHorizontal: 20,
-    marginVertical: 10,
-    paddingHorizontal: 15,
+    marginVertical: 15,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 10,
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 10,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   searchPlaceholder: {
-    color: '#666',
-    fontSize: 16,
+    flex: 1,
+    color: '#9CA3AF',
+    fontSize: 15,
+  },
+  filterButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
   },
   carouselContainer: {
-    marginVertical: 20,
+    marginTop: 10,
+    marginBottom: 20,
   },
   carouselListContent: {
     paddingHorizontal: 20,
   },
   carouselItem: {
-    width: width - 40,
+    width: ITEM_WIDTH,
     height: 200,
-    borderRadius: 15,
+    borderRadius: 20,
     overflow: 'hidden',
-    marginRight: 15,
-    backgroundColor: '#1a1a1a',
+    marginRight: ITEM_SPACING,
   },
   carouselImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    opacity: 0.3,
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.7,
   },
   carouselTextContainer: {
     flex: 1,
     padding: 20,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
   },
-  carouselIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    marginBottom: 10,
+  offerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FBBF24',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  offerText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   carouselTitle: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 4,
   },
   carouselSubtitle: {
-    color: '#ccc',
+    color: '#fff',
     fontSize: 14,
+    marginBottom: 12,
+    opacity: 0.95,
+  },
+  bookButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+  },
+  bookButtonText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
   },
   pagination: {
     flexDirection: 'row',
@@ -332,15 +519,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#333',
+    backgroundColor: '#D1D5DB',
     marginHorizontal: 4,
   },
   paginationDotActive: {
-    backgroundColor: '#fff',
-    width: 20,
+    backgroundColor: '#6366F1',
+    width: 24,
   },
   section: {
-    marginTop: 20,
+    marginTop: 10,
     paddingBottom: 20,
   },
   sectionHeader: {
@@ -348,83 +535,120 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 15,
+    marginBottom: 16,
   },
   sectionTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    color: '#111827',
+    fontSize: 22,
+    fontWeight: '800',
   },
-  viewMore: {
-    color: '#666',
-    fontSize: 14,
+  sectionSubtitle: {
+    color: '#6B7280',
+    fontSize: 13,
+    marginTop: 2,
   },
-  horizontalList: {
-    paddingHorizontal: 20,
+  viewMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  viewMoreText: {
+    color: '#6366F1',
+    fontSize: 13,
+    fontWeight: '600',
   },
   topRatedCard: {
-    width: (width - 55) / 2, // (width - 40 (padding) - 15 (gap)) / 2
-    backgroundColor: '#1a1a1a',
-    borderRadius: 15, // Increased border radius for better look
+    width: (width / 2)-18,
+    backgroundColor: '#fff',
+    borderRadius: 10,
     overflow: 'hidden',
-    // marginRight is removed as space-between handles it
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardImageContainer: {
+    position: 'relative',
   },
   topRatedImage: {
     width: '100%',
-    height: 120,
+    height: 140,
   },
-  topRatedInfo: {
-    padding: 12,
-  },
-  topRatedName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  topRatedLocation: {
-    color: '#666',
-    fontSize: 12,
+  iconBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+    backdropFilter: 'blur(10px)',
   },
   ratingText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  dealCard: {
-    width: 200,
-    height: 100,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 15,
-    padding: 15,
-    marginRight: 15,
-    justifyContent: 'center',
+  topRatedInfo: {
+    padding: 14,
   },
-  dealTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+  topRatedName: {
+    color: '#111827',
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  dealSubtitle: {
-    color: '#666',
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  topRatedLocation: {
+    color: '#6B7280',
     fontSize: 12,
+    marginLeft: 2,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  priceText: {
+    color: '#6366F1',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  perItemText: {
+    color: '#9CA3AF',
+    fontSize: 12,
+    marginLeft: 2,
   },
   topRatedListContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
   },
   topRatedColumnWrapper: {
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 16,
   },
 });
 

@@ -10,11 +10,7 @@ const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Welcome" screenOptions={{
-        // header: () => (
-        //   <View><Text style={{ fontSize: 18, fontWeight: 'bold' , color:'red'}}>Header</Text></View>
-        // ),
-      }}> 
+    <Stack.Navigator initialRouteName="Welcome" > 
       <Stack.Screen
         name="Welcome"
         component={WelcomeScreen }

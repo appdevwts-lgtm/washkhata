@@ -13,6 +13,7 @@ import {
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import Video from 'react-native-video';
 import { useIsFocused } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -185,7 +186,7 @@ const WelcomeScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       <Video
@@ -346,7 +347,7 @@ const WelcomeScreen = ({ navigation }) => {
           </View>
         </Animated.View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

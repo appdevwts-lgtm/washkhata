@@ -10,8 +10,12 @@ const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
 
 const config = {
+  transformer: {
+    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+  },
   resolver: {
-    assetExts: [...assetExts, 'avif'],
+    assetExts: assetExts.filter(ext => ext !== 'svg').concat(['avif', 'lottie']),
+    sourceExts: [...sourceExts, 'svg'],
   },
 };
 

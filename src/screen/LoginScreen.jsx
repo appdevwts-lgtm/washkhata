@@ -6,13 +6,26 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
   Alert,
   Keyboard,
+  ScrollView,
+  Dimensions,
+  Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import LottieView from 'lottie-react-native';
+
+// CORRECT WAY: Use require() for Lottie files
+// Option 1: If your file is .json
+// const laundryAnimation = require('../assets/laundry.json');
+
+// Option 2: If your file is .lottie (see metro.config.js below)
+const laundryAnimation = require('../assets/laundry.lottie');
+
+const { width, height } = Dimensions.get('window');
 
 const OTPLoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -22,7 +35,7 @@ const OTPLoginScreen = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const navigate = useNavigation();
-  
+
   const otpRefs = useRef([]);
   const timerRef = useRef(null);
 
@@ -35,6 +48,28 @@ const OTPLoginScreen = () => {
     };
   }, []);
 
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
   const startTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -42,7 +77,7 @@ const OTPLoginScreen = () => {
 
     setTimer(30);
     timerRef.current = setInterval(() => {
-      setTimer((prevTime) => {
+      setTimer(prevTime => {
         if (prevTime <= 1) {
           if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -54,32 +89,35 @@ const OTPLoginScreen = () => {
     }, 1000);
   }, []);
 
-  const validatePhoneNumber = (phone) => {
+  const validatePhoneNumber = phone => {
     const phoneRegex = /^[6-9]\d{9}$/;
     return phoneRegex.test(phone);
   };
 
   const handleSendOTP = async () => {
     if (!validatePhoneNumber(phoneNumber)) {
-      Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit phone number starting with 6-9.');
+      Alert.alert(
+        'Invalid Phone Number',
+        'Please enter a valid 10-digit phone number starting with 6-9.',
+      );
       return;
     }
 
     setIsSendingOtp(true);
-    
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       setIsOtpSent(true);
       startTimer();
-      
+
       // Focus first OTP input after a short delay
       setTimeout(() => {
         otpRefs.current[0]?.focus();
       }, 500);
-      
-      Alert.alert('OTP Sent', `Verification code sent to +91 ${phoneNumber}`);
+
+      // Alert.alert('OTP Sent', `Verification code sent to +91 ${phoneNumber}`);
     } catch (error) {
       Alert.alert('Error', 'Failed to send OTP. Please try again.');
       console.error('OTP Send Error:', error);
@@ -129,16 +167,13 @@ const OTPLoginScreen = () => {
     }
 
     setIsVerifying(true);
-    
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       console.log('OTP Verified:', otpValue);
-      navigate.navigate('Tab')
-      // Alert.alert('Success', 'OTP verified successfully!', [
-      //   { text: 'OK', onPress: () => console.log('Navigate to next screen') }
-      // ]);
+      navigate.navigate('Tab');
     } catch (error) {
       Alert.alert('Verification Failed', 'Invalid OTP. Please try again.');
       console.error('OTP Verification Error:', error);
@@ -154,12 +189,11 @@ const OTPLoginScreen = () => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       startTimer();
       setOtp(['', '', '', '', '', '']);
       otpRefs.current[0]?.focus();
-      
-      // Alert.alert('OTP Resent', 'A new verification code has been sent.');
+
       console.log('OTP Resent to:', phoneNumber);
     } catch (error) {
       Alert.alert('Error', 'Failed to resend OTP. Please try again.');
@@ -167,40 +201,59 @@ const OTPLoginScreen = () => {
     }
   };
 
-  const handleBackPress = () => {
-    setIsOtpSent(false);
-    setOtp(['', '', '', '', '', '']);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    setTimer(30);
-  };
-
   const isPhoneValid = validatePhoneNumber(phoneNumber);
   const isOtpComplete = otp.every(digit => digit !== '');
 
   return (
-    <View style={styles.wrapper}>
-      <StatusBar barStyle="light-content" backgroundColor="#ffffffff" />
-      {/* <KeyboardAvoidingView
+    <SafeAreaView style={styles.wrapper}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+
+      <View
+        style={[
+          {
+            backgroundColor: '#000000ff',
+            height: '40%',
+            paddingTop: -20,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        ]}
+      >
+        <LottieView
+          source={laundryAnimation}
+          autoPlay
+          loop
+          style={{
+            width: width - 20,
+            height: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          resizeMode="contain"
+        />
+      </View>
+
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}> */}
-        
-        <View style={styles.header}>
-           <View style={styles.imgLogo}></View>
-          <Text style={styles.logo}>WashKhata</Text>
-        </View>
-
-        {/* White content card */}
-        <SafeAreaView style={styles.contentCard}>
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView
+          style={styles.contentCard}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.cardInner}>
             {!isOtpSent ? (
               <>
-                <View style={styles.topContent}>
-                  <Text style={styles.title}>Welcome Back</Text>
-                 
-                </View>
+                {!isKeyboardVisible && (
+                  <View style={styles.headerCard}>
+                    <View style={styles.imgLogo}></View>
+                    <Text style={styles.logo}>WashKhata</Text>
+                  </View>
+                )}
 
                 <View style={styles.formContainer}>
                   <Text style={styles.label}>Phone Number</Text>
@@ -212,7 +265,9 @@ const OTPLoginScreen = () => {
                       placeholderTextColor="#999"
                       keyboardType="phone-pad"
                       value={phoneNumber}
-                      onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))}
+                      onChangeText={text =>
+                        setPhoneNumber(text.replace(/[^0-9]/g, ''))
+                      }
                       maxLength={10}
                       editable={!isSendingOtp}
                       returnKeyType="done"
@@ -220,22 +275,24 @@ const OTPLoginScreen = () => {
                     />
                   </View>
 
-                  <TouchableOpacity
+                {!isKeyboardVisible &&   <TouchableOpacity
                     style={[
                       styles.button,
                       (!isPhoneValid || isSendingOtp) && styles.buttonDisabled,
                     ]}
                     onPress={handleSendOTP}
                     disabled={!isPhoneValid || isSendingOtp}
-                    activeOpacity={0.8}>
+                    activeOpacity={0.8}
+                  >
                     <Text style={styles.buttonText}>
                       {isSendingOtp ? 'Sending...' : 'Send OTP'}
                     </Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity>}
 
-                  <Text style={styles.termsText}>
-                    By continuing, you agree to our Terms of Service and Privacy Policy
-                  </Text>
+                 {!isKeyboardVisible && <Text style={styles.termsText}>
+                    By continuing, you agree to our Terms of Service and Privacy
+                    Policy
+                  </Text>}
                 </View>
               </>
             ) : (
@@ -254,16 +311,13 @@ const OTPLoginScreen = () => {
                     {otp.map((digit, index) => (
                       <TextInput
                         key={index}
-                        ref={(ref) => (otpRefs.current[index] = ref)}
-                        style={[
-                          styles.otpBox,
-                          digit && styles.otpBoxFilled,
-                        ]}
+                        ref={ref => (otpRefs.current[index] = ref)}
+                        style={[styles.otpBox, digit && styles.otpBoxFilled]}
                         keyboardType="number-pad"
                         maxLength={1}
                         value={digit}
-                        onChangeText={(value) => handleOtpChange(value, index)}
-                        onKeyPress={(e) => handleKeyPress(e, index)}
+                        onChangeText={value => handleOtpChange(value, index)}
+                        onKeyPress={e => handleKeyPress(e, index)}
                         selectTextOnFocus
                         editable={!isVerifying}
                       />
@@ -273,12 +327,14 @@ const OTPLoginScreen = () => {
                   <View style={styles.resendContainer}>
                     {timer > 0 ? (
                       <Text style={styles.timerText}>
-                        Resend code in <Text style={styles.timerBold}>{timer}s</Text>
+                        Resend code in{' '}
+                        <Text style={styles.timerBold}>{timer}s</Text>
                       </Text>
                     ) : (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={handleResendOTP}
-                        activeOpacity={0.7}>
+                        activeOpacity={0.7}
+                      >
                         <Text style={styles.resendText}>Resend OTP</Text>
                       </TouchableOpacity>
                     )}
@@ -291,7 +347,8 @@ const OTPLoginScreen = () => {
                     ]}
                     onPress={() => handleVerifyOTP()}
                     disabled={!isOtpComplete || isVerifying}
-                    activeOpacity={0.8}>
+                    activeOpacity={0.8}
+                  >
                     <Text style={styles.buttonText}>
                       {isVerifying ? 'Verifying...' : 'Verify & Continue'}
                     </Text>
@@ -300,9 +357,9 @@ const OTPLoginScreen = () => {
               </>
             )}
           </View>
-        </SafeAreaView>
-      {/* </KeyboardAvoidingView> */}
-    </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -311,61 +368,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  keyboardView: {
-    flex: 1,
-  },
   header: {
-    backgroundColor: '#000',
-    paddingBottom: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    position: 'relative',
+    backgroundColor: '#ffffffff',
+    paddingBottom: 30,
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  headerCard: {
+    backgroundColor: '#ffffffff',
+    paddingBottom: 60,
+    top: 30,
+    position: 'absolute',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    marginBottom: 20,
-    minHeight: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-  },
-  backIcon: {
-    fontSize: 28,
-    color: '#FFF',
-    fontWeight: 'bold',
+    width: width,
   },
   imgLogo: {
     width: 100,
     height: 100,
     borderRadius: 50,
     overflow: 'hidden',
-    backgroundColor: '#FFF',
+    backgroundColor: '#000000ff',
     marginBottom: 20,
   },
   logo: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#000000ff',
     textAlign: 'center',
     letterSpacing: 1,
+  },
+  keyboardView: {
+    flex: 1,
   },
   contentCard: {
     flex: 1,
     backgroundColor: '#FFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -378,14 +419,18 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   cardInner: {
-    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 32,
-    paddingBottom: 10,
+    paddingBottom: 24,
+    minHeight: '100%',
+    justifyContent: 'flex-end',
   },
   topContent: {
-    // marginBottom: 32,
+    marginBottom: 32,
   },
   title: {
     fontSize: 28,
@@ -404,10 +449,10 @@ const styles = StyleSheet.create({
   phoneHighlight: {
     color: '#000',
     fontWeight: '600',
-    textAlign: 'center', 
+    textAlign: 'center',
   },
   formContainer: {
-    flex: 1,
+    marginTop: 0,
   },
   label: {
     fontSize: 14,
