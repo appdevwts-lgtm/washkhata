@@ -5,21 +5,31 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  Dimensions,
   StyleSheet,
   FlatList,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width - 40;
-const ITEM_SPACING = 15;
-
 const App = () => {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const isLargeTablet = width >= 1024;
+
+  // Responsive calculations
+  const HORIZONTAL_PADDING = isTablet ? 32 : 20;
+  const ITEM_SPACING = isTablet ? 24 : 16;
+  const ITEM_WIDTH = isLargeTablet 
+    ? width * 0.65 - HORIZONTAL_PADDING
+    : isTablet 
+    ? width * 0.75 - HORIZONTAL_PADDING
+    : width - (HORIZONTAL_PADDING * 2) - ITEM_SPACING;
+  const numColumns = isLargeTablet ? 4 : isTablet ? 3 : 2;
+
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef(null);
   const autoPlayTimer = useRef(null);
@@ -30,24 +40,21 @@ const App = () => {
       id: '1',
       title: 'Mount Laundry',
       subtitle: 'Your clothes will reach you in 2 days!',
-      image:
-        'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400',
+      image: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400',
       gradient: ['rgba(99, 102, 241, 0.9)', 'rgba(168, 85, 247, 0.9)'],
     },
     {
       id: '2',
       title: 'Quick Service',
       subtitle: 'Fast and reliable laundry service',
-      image:
-        'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400',
+      image: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400',
       gradient: ['rgba(236, 72, 153, 0.9)', 'rgba(239, 68, 68, 0.9)'],
     },
     {
       id: '3',
       title: 'Premium Care',
       subtitle: 'Your garments deserve the best',
-      image:
-        'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400',
+      image: 'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400',
       gradient: ['rgba(34, 197, 94, 0.9)', 'rgba(20, 184, 166, 0.9)'],
     },
   ];
@@ -61,8 +68,7 @@ const App = () => {
       price: '₹99',
       icon: 'washing-machine',
       color: '#3B82F6',
-      image:
-        'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=300',
+      image: 'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=300',
     },
     {
       id: '2',
@@ -72,8 +78,7 @@ const App = () => {
       price: '₹79',
       icon: 'tumble-dryer',
       color: '#EC4899',
-      image:
-        'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=300',
+      image: 'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=300',
     },
     {
       id: '3',
@@ -93,8 +98,7 @@ const App = () => {
       price: '₹69',
       icon: 'spray',
       color: '#8B5CF6',
-      image:
-        'https://images.unsplash.com/photo-1521656693072-a8333fd5d533?w=300',
+      image: 'https://img.freepik.com/free-photo/front-view-young-male-holding-iron-with-confused-expression-pink_140725-154252.jpg',
     },
   ];
 
@@ -125,12 +129,11 @@ const App = () => {
   const goToNextSlide = () => {
     setActiveSlide(prevSlide => {
       const nextSlide = (prevSlide + 1) % carouselData.length;
-
-      const offset = nextSlide * (ITEM_WIDTH + ITEM_SPACING);
-
-      flatListRef.current?.scrollToOffset({
-        offset: offset,
+      
+      flatListRef.current?.scrollToIndex({
+        index: nextSlide,
         animated: true,
+        viewPosition: 0.5, // Center the item
       });
 
       return nextSlide;
@@ -153,9 +156,15 @@ const App = () => {
   const onMomentumScrollEnd = event => {
     scrolling.current = false;
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffsetX / (ITEM_WIDTH + ITEM_SPACING));
-
-    setActiveSlide(index);
+    const viewportWidth = event.nativeEvent.layoutMeasurement.width;
+    
+    // Calculate which item is closest to center
+    const centerX = contentOffsetX + (viewportWidth / 2);
+    const index = Math.round((centerX - HORIZONTAL_PADDING) / (ITEM_WIDTH + ITEM_SPACING));
+    
+    const clampedIndex = Math.max(0, Math.min(index, carouselData.length - 1));
+    
+    setActiveSlide(clampedIndex);
     startAutoPlay();
   };
 
@@ -166,124 +175,143 @@ const App = () => {
   });
 
   const renderCarouselItem = ({ item }) => (
-    <View style={styles.carouselItem}>
-      <Image source={{ uri: item.image }} style={styles.carouselImage} />
-      <View
-        style={[styles.gradientOverlay, { backgroundColor: item.gradient[0] }]}
-      />
-      <View style={styles.carouselTextContainer}>
-        <View style={styles.offerBadge}>
-          <Icon name="tag" size={14} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={styles.offerText}>50% OFF</Text>
+    <View style={[
+      styles.carouselItemWrapper,
+      { width: ITEM_WIDTH + ITEM_SPACING, paddingRight: ITEM_SPACING }
+    ]}>
+      <View style={[
+        styles.carouselItem,
+        isTablet && styles.carouselItemTablet,
+      ]}>
+        <Image source={{ uri: item.image }} style={styles.carouselImage} />
+        <View style={[styles.gradientOverlay, { backgroundColor: item.gradient[0] }]} />
+        <View style={[styles.carouselTextContainer, isTablet && styles.carouselTextContainerTablet]}>
+          <View style={[styles.offerBadge, isTablet && styles.offerBadgeTablet]}>
+            <Icon name="tag" size={isTablet ? 16 : 14} color="#fff" style={{ marginRight: 4 }} />
+            <Text style={[styles.offerText, isTablet && styles.offerTextTablet]}>50% OFF</Text>
+          </View>
+          <Text style={[styles.carouselTitle, isTablet && styles.carouselTitleTablet]}>
+            {item.title}
+          </Text>
+          <Text style={[styles.carouselSubtitle, isTablet && styles.carouselSubtitleTablet]}>
+            {item.subtitle}
+          </Text>
+          <TouchableOpacity style={[styles.bookButton, isTablet && styles.bookButtonTablet]}>
+            <Text style={[styles.bookButtonText, isTablet && styles.bookButtonTextTablet]}>
+              Book Now
+            </Text>
+            <Feather
+              name="arrow-right"
+              size={isTablet ? 18 : 16}
+              color="#111827"
+              style={{ marginLeft: 6 }}
+            />
+          </TouchableOpacity>
         </View>
-        <Text style={styles.carouselTitle}>{item.title}</Text>
-        <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
-        <TouchableOpacity style={styles.bookButton}>
-          <Text style={styles.bookButtonText}>Book Now</Text>
-          <Feather
-            name="arrow-right"
-            size={16}
-            color="#111827"
-            style={{ marginLeft: 6 }}
-          />
-        </TouchableOpacity>
       </View>
     </View>
   );
 
-  const renderTopRatedItem = ({ item }) => (
-    <TouchableOpacity style={styles.topRatedCard} activeOpacity={0.7}>
-      <View style={styles.cardImageContainer}>
-        <Image source={{ uri: item.image }} style={styles.topRatedImage} />
-        <View style={[styles.iconBadge, { backgroundColor: item.color }]}>
-          <Icon name={item.icon} size={22} color="#fff" />
-        </View>
-        {/* <View style={styles.ratingBadge}>
-          <Ionicons
-            name="star"
-            size={12}
-            color="#FBBF24"
-            style={{ marginRight: 2 }}
+  const renderTopRatedItem = ({ item }) => {
+    const cardWidth = isLargeTablet 
+      ? (width - 80) / 4 - 16
+      : isTablet 
+      ? (width - 64) / 3 - 16 
+      : (width / 2) - 18;
+
+    return (
+      <TouchableOpacity 
+        style={[
+          styles.topRatedCard,
+          { width: cardWidth },
+          isTablet && styles.topRatedCardTablet,
+        ]} 
+        activeOpacity={0.7}
+      >
+        <View style={styles.cardImageContainer}>
+          <Image 
+            source={{ uri: item.image }} 
+            style={[
+              styles.topRatedImage,
+              isTablet && styles.topRatedImageTablet,
+            ]} 
           />
-          <Text style={styles.ratingText}>{item.rating}</Text>
-        </View> */}
-      </View>
-      <View style={styles.topRatedInfo}>
-        <Text style={styles.topRatedName}>{item.name}</Text>
-        <View style={styles.locationContainer}>
-          <Ionicons name="location" size={14} color="#6B7280" />
-          <Text style={styles.topRatedLocation}>{item.location}</Text>
+          <View style={[
+            styles.iconBadge, 
+            { backgroundColor: item.color },
+            isTablet && styles.iconBadgeTablet,
+          ]}>
+            <Icon name={item.icon} size={isTablet ? 26 : 22} color="#fff" />
+          </View>
         </View>
-        {/* <View style={styles.priceContainer}>
-          <Text style={styles.priceText}>{item.price}</Text>
-          <Text style={styles.perItemText}>/item</Text>
-        </View> */}
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={[styles.topRatedInfo, isTablet && styles.topRatedInfoTablet]}>
+          <Text style={[styles.topRatedName, isTablet && styles.topRatedNameTablet]}>
+            {item.name}
+          </Text>
+          <View style={styles.locationContainer}>
+            <Ionicons name="location" size={isTablet ? 16 : 14} color="#6B7280" />
+            <Text style={[styles.topRatedLocation, isTablet && styles.topRatedLocationTablet]}>
+              {item.location}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor='#fff' barStyle='dark-content'/>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+      
       {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <TouchableOpacity style={styles.locationBadge}>
-            <Ionicons
-              name="location"
-              size={16}
-              color="#111827"
-              style={{ marginRight: 4 }}
-            />
-            <Text style={styles.locationText}>Ghaziabad, UP</Text>
-            <Ionicons
-              name="chevron-down"
-              size={14}
-              color="#6B7280"
-              style={{ marginLeft: 4 }}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={22} color="#374151" />
-            <View style={styles.notificationDot} />
-          </TouchableOpacity>
-          {/* <TouchableOpacity style={styles.profileButton}>
-            <Ionicons name="person" size={20} color="#fff" />
-          </TouchableOpacity> */}
+      <View style={[styles.header, isTablet && styles.headerTablet]}>
+      <View style={[{flex:1,flexDirection:"row", justifyContent:"space-between"},isTablet && styles.headerContent]}>
+          <View>
+            <TouchableOpacity style={[styles.locationBadge, isTablet && styles.locationBadgeTablet]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}><Ionicons
+                name="location"
+                size={isTablet ? 18 : 16}
+                color="#111827"
+                style={{ marginRight: 4 }}
+              />
+              <Text style={[styles.locationText, isTablet && styles.locationTextTablet]}>
+                Ghaziabad, UP
+              </Text>
+              </View>
+              <Ionicons
+                name="chevron-down"
+                size={isTablet ? 16 : 14}
+                color="#6B7280"
+                style={{ marginLeft: 4 }}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={[styles.notificationButton, isTablet && styles.notificationButtonTablet]}>
+              <Ionicons name="notifications-outline" size={isTablet ? 26 : 22} color="#374151" />
+              <View style={[styles.notificationDot, isTablet && styles.notificationDotTablet]} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* Search Bar */}
-      {/* <View style={styles.searchContainer}>
-        <Feather
-          name="search"
-          size={20}
-          color="#9CA3AF"
-          style={{ marginRight: 10 }}
-        />
-        <Text style={styles.searchPlaceholder}>Search for services...</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Ionicons name="options-outline" size={20} color="#6B7280" />
-        </TouchableOpacity>
-      </View> */}
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Carousel */}
-        <View style={styles.carouselContainer}>
+        <View style={[styles.carouselContainer, isTablet && styles.carouselContainerTablet]}>
           <FlatList
             ref={flatListRef}
             data={carouselData}
             renderItem={renderCarouselItem}
             keyExtractor={item => item.id}
             horizontal
-            pagingEnabled
             showsHorizontalScrollIndicator={false}
             snapToInterval={ITEM_WIDTH + ITEM_SPACING}
-            snapToAlignment="start"
+            snapToAlignment="center"
             decelerationRate="fast"
-            contentContainerStyle={styles.carouselListContent}
+            contentContainerStyle={[
+              styles.carouselListContent,
+              { paddingHorizontal: HORIZONTAL_PADDING }
+            ]}
             onScrollBeginDrag={onScrollBeginDrag}
             onScrollEndDrag={onScrollEndDrag}
             onMomentumScrollBegin={onMomentumScrollBegin}
@@ -291,50 +319,58 @@ const App = () => {
             getItemLayout={getItemLayout}
             removeClippedSubviews={false}
             scrollEventThrottle={16}
+            initialScrollIndex={0}
+            viewabilityConfig={{
+              itemVisiblePercentThreshold: 50
+            }}
           />
-          <View style={styles.pagination}>
+          <View style={[styles.pagination, isTablet && styles.paginationTablet]}>
             {carouselData.map((_, index) => (
               <View
                 key={index}
                 style={[
                   styles.paginationDot,
+                  isTablet && styles.paginationDotTablet,
                   activeSlide === index && styles.paginationDotActive,
+                  activeSlide === index && isTablet && styles.paginationDotActiveTablet,
                 ]}
               />
             ))}
           </View>
         </View>
 
-        {/* Top Rated */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        {/* Top Rated Services */}
+        <View style={[styles.section, isTablet && styles.sectionTablet]}>
+          <View style={[styles.sectionHeader, isTablet && styles.sectionHeaderTablet]}>
             <View>
-              <Text style={styles.sectionTitle}>Our Services</Text>
-              <Text style={styles.sectionSubtitle}>Choose what you need</Text>
+              <Text style={[styles.sectionTitle, isTablet && styles.sectionTitleTablet]}>
+                Our Services
+              </Text>
+              <Text style={[styles.sectionSubtitle, isTablet && styles.sectionSubtitleTablet]}>
+                Choose what you need
+              </Text>
             </View>
-            {/* <TouchableOpacity style={styles.viewMoreButton}>
-              <Text style={styles.viewMoreText}>View All</Text>
-              <Feather
-                name="arrow-right"
-                size={14}
-                color="#6366F1"
-                style={{ marginLeft: 4 }}
-              />
-            </TouchableOpacity> */}
           </View>
           <FlatList
             data={topRatedData}
             renderItem={renderTopRatedItem}
             keyExtractor={item => item.id}
-            numColumns={2}
+            key={numColumns} // Force re-render when columns change
+            numColumns={numColumns}
             scrollEnabled={false}
-            columnWrapperStyle={styles.topRatedColumnWrapper}
-            contentContainerStyle={styles.topRatedListContent}
+            columnWrapperStyle={[
+              styles.topRatedColumnWrapper,
+              isTablet && styles.topRatedColumnWrapperTablet,
+            ]}
+            contentContainerStyle={[
+              styles.topRatedListContent,
+              isTablet && styles.topRatedListContentTablet,
+            ]}
           />
         </View>
 
         {/* Bottom Spacing */}
-        <View style={{ height: 120 }} />
+        <View style={{ height: isTablet ? 80 : 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -353,14 +389,21 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 15,
     backgroundColor: '#fff',
-    borderBottomColor:'#d1d1d1ff',
-    borderBottomWidth:1,
-  
+    borderBottomColor: '#d1d1d1ff',
+    borderBottomWidth: 1,
   },
-  greetingText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
+  headerTablet: {
+    paddingHorizontal: 32,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flex: 1,
+    maxWidth: 1400,
+    marginHorizontal: 'auto',
   },
   locationBadge: {
     flexDirection: 'row',
@@ -369,11 +412,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
+    
+  },
+  locationBadgeTablet: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
   },
   locationText: {
     color: '#111827',
     fontSize: 14,
     fontWeight: '600',
+  },
+  locationTextTablet: {
+    fontSize: 16,
   },
   headerRight: {
     flexDirection: 'row',
@@ -389,6 +441,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
+  notificationButtonTablet: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
   notificationDot: {
     position: 'absolute',
     top: 8,
@@ -400,41 +457,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
   },
-  profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#6366F1',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginVertical: 15,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  searchPlaceholder: {
-    flex: 1,
-    color: '#9CA3AF',
-    fontSize: 15,
-  },
-  filterButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
+  notificationDotTablet: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   content: {
     flex: 1,
@@ -443,15 +469,25 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
+  carouselContainerTablet: {
+    marginTop: 20,
+    marginBottom: 32,
+  },
   carouselListContent: {
-    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  carouselItemWrapper: {
+    justifyContent: 'center',
   },
   carouselItem: {
-    width: ITEM_WIDTH,
+    width: '100%',
     height: 200,
     borderRadius: 20,
     overflow: 'hidden',
-    marginRight: ITEM_SPACING,
+  },
+  carouselItemTablet: {
+    height: 280,
+    borderRadius: 24,
   },
   carouselImage: {
     width: '100%',
@@ -469,6 +505,9 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'space-between',
   },
+  carouselTextContainerTablet: {
+    padding: 28,
+  },
   offerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -478,10 +517,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
   },
+  offerBadgeTablet: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+  },
   offerText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
+  },
+  offerTextTablet: {
+    fontSize: 14,
   },
   carouselTitle: {
     color: '#fff',
@@ -489,11 +536,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 4,
   },
+  carouselTitleTablet: {
+    fontSize: 36,
+    marginBottom: 6,
+  },
   carouselSubtitle: {
     color: '#fff',
     fontSize: 14,
     marginBottom: 12,
     opacity: 0.95,
+  },
+  carouselSubtitleTablet: {
+    fontSize: 18,
+    marginBottom: 16,
   },
   bookButton: {
     flexDirection: 'row',
@@ -504,16 +559,27 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 25,
   },
+  bookButtonTablet: {
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 30,
+  },
   bookButtonText: {
     color: '#111827',
     fontSize: 14,
     fontWeight: '700',
+  },
+  bookButtonTextTablet: {
+    fontSize: 16,
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 15,
+  },
+  paginationTablet: {
+    marginTop: 20,
   },
   paginationDot: {
     width: 8,
@@ -522,13 +588,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1D5DB',
     marginHorizontal: 4,
   },
+  paginationDotTablet: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 6,
+  },
   paginationDotActive: {
     backgroundColor: '#6366F1',
     width: 24,
   },
+  paginationDotActiveTablet: {
+    width: 32,
+  },
   section: {
     marginTop: 10,
     paddingBottom: 20,
+  },
+  sectionTablet: {
+    marginTop: 0,
+    paddingBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -537,31 +616,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
+  sectionHeaderTablet: {
+    paddingHorizontal: 32,
+    marginBottom: 24,
+  },
   sectionTitle: {
     color: '#111827',
     fontSize: 22,
     fontWeight: '800',
+  },
+  sectionTitleTablet: {
+    fontSize: 28,
   },
   sectionSubtitle: {
     color: '#6B7280',
     fontSize: 13,
     marginTop: 2,
   },
-  viewMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  viewMoreText: {
-    color: '#6366F1',
-    fontSize: 13,
-    fontWeight: '600',
+  sectionSubtitleTablet: {
+    fontSize: 15,
+    marginTop: 4,
   },
   topRatedCard: {
-    width: (width / 2)-18,
     backgroundColor: '#fff',
     borderRadius: 10,
     overflow: 'hidden',
@@ -571,12 +647,21 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
+  topRatedCardTablet: {
+    borderRadius: 16,
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
+  },
   cardImageContainer: {
     position: 'relative',
   },
   topRatedImage: {
     width: '100%',
     height: 140,
+  },
+  topRatedImageTablet: {
+    height: 180,
   },
   iconBadge: {
     position: 'absolute',
@@ -593,31 +678,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
-    backdropFilter: 'blur(10px)',
-  },
-  ratingText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
+  iconBadgeTablet: {
+    top: 16,
+    left: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   topRatedInfo: {
     padding: 14,
+  },
+  topRatedInfoTablet: {
+    padding: 18,
   },
   topRatedName: {
     color: '#111827',
     fontSize: 17,
     fontWeight: '700',
     marginBottom: 4,
+  },
+  topRatedNameTablet: {
+    fontSize: 20,
+    marginBottom: 6,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -629,26 +711,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 2,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  priceText: {
-    color: '#6366F1',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  perItemText: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    marginLeft: 2,
+  topRatedLocationTablet: {
+    fontSize: 14,
+    marginLeft: 4,
   },
   topRatedListContent: {
     paddingHorizontal: 12,
   },
+  topRatedListContentTablet: {
+    paddingHorizontal: 24,
+  },
   topRatedColumnWrapper: {
     justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  topRatedColumnWrapperTablet: {
+    marginBottom: 20,
   },
 });
 
