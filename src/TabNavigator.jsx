@@ -1,17 +1,21 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './screen/HomeScreen';
-import { View, Platform } from 'react-native';
+import { View, Platform, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ProfileScreen from './screen/ProfileScreen';
 import OrderScreen from './screen/OrderScreen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CartScreen from './screen/CartScreen';
+import ScheduleScreen from './screen/ScheduleScreen';
 
 const Tab = createBottomTabNavigator();
 
 function TabNavigatorContent() {
   const insets = useSafeAreaInsets();
+  
+  const cartItemCount = 3;
 
   return (
     <Tab.Navigator
@@ -78,20 +82,51 @@ function TabNavigatorContent() {
                   }}
                 />
               )}
-              <Icon
+             { route.name !=="Schedule" ? <Icon
                 name={iconName}
                 size={iconSize}
                 color={color}
                 style={{
                   marginBottom: focused ? 2 : 0,
                 }}
-              />
+              /> :  <MaterialIcons name="schedule" size={iconSize} color={color} style={{
+                  marginBottom: focused ? 2 : 0,
+                }} />}
+              {route.name === 'Cart' && cartItemCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    right: -10,
+                    top: -5,
+                    backgroundColor: '#fff',
+                    borderRadius: 10,
+                    minWidth: 20,
+                    height: 20,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingHorizontal: 5,
+                    borderWidth: 2,
+                    borderColor: '#000',
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#000',
+                      fontSize: 11,
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </Text>
+                </View>
+              )}
             </View>
           );
         },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Schedule" component={ScheduleScreen} />
       <Tab.Screen name="Cart" component={CartScreen} />
       <Tab.Screen name="Orders" component={OrderScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

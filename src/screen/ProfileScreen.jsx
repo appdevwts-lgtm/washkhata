@@ -335,13 +335,13 @@ export default function ProfileScreen() {
               onPress={() => navigation.navigate('HelpCenter')}
               isTablet={isTablet}
             />
-            <MenuItem 
+            {/* <MenuItem 
               icon="chatbubble-outline"
               title="Contact Us"
               subtitle="Get in touch with us"
               onPress={() => navigation.navigate('ContactUs')}
               isTablet={isTablet}
-            />
+            /> */}
             <MenuItem 
               icon="shield-checkmark-outline"
               title="Privacy Policy"
@@ -351,7 +351,7 @@ export default function ProfileScreen() {
             <MenuItem 
               icon="document-text-outline"
               title="Terms & Conditions"
-              onPress={() => navigation.navigate('TermsConditions')}
+              onPress={() => navigation.navigate('TermsCondtions')}
               isTablet={isTablet}
             />
           </View>
@@ -506,7 +506,7 @@ export default function ProfileScreen() {
           {renderLeftColumn()}
           
           {/* Preferences Section for mobile/small tablet */}
-          {!isLargeTablet && (
+          {/* {!isLargeTablet && (
             <View style={[
               styles.section,
               isTablet && styles.sectionTablet,
@@ -542,7 +542,7 @@ export default function ProfileScreen() {
                 />
               </View>
             </View>
-          )}
+          )} */}
           
           {/* Logout Button & Version for mobile/small tablet */}
           {!isLargeTablet && (

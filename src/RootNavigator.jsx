@@ -11,6 +11,9 @@ import CouponSceeen from './screen/CouponSceeen';
 import HelpCenter from './screen/HelpCenter';
 import MyAddressScreen from './screen/MyAddressScreen';
 import PaymentMethod from './screen/PaymentMethod';
+import PrivacyPolicyScreen from './screen/PrivacyPolicyScreen';
+import TermsConditionScreen from './screen/TermsConditionScreen';
+import NotificationsScreen from './screen/NotificationScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -64,6 +67,21 @@ export default function RootNavigator() {
       <Stack.Screen
         name="PaymentMethod"
         component={PaymentMethod}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TermsCondtions"
+        component={TermsConditionScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
         options={{ headerShown: false }}
       />
 

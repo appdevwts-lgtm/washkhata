@@ -1,432 +1,539 @@
-import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  Modal,
   TouchableOpacity,
   StatusBar,
+  SafeAreaView,
   TextInput,
+  ScrollView,
   Dimensions,
-  Alert,
-  useWindowDimensions,
+  PanResponder,
+  Animated,
+  BackHandler,
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import MapView, { Marker } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function AddAddressScreen() {
-  const { width, height } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isLargeTablet = width >= 1024;
+const { height, width } = Dimensions.get('window');
 
-  const [region, setRegion] = useState({
-    latitude: 28.6692,
-    longitude: 77.4538,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  });
-  
-  const [selectedLocation, setSelectedLocation] = useState({
-    latitude: 28.6692,
-    longitude: 77.4538,
-    address: 'Ghaziabad, Uttar Pradesh, India',
-  });
+// Detect if device is tablet (width >= 600px is typical tablet breakpoint)
+const isTablet = width >= 600;
+const isLargeTablet = width >= 900;
+const isLandscape = width > height;
 
-  const [fullName, setFullName] = useState('');
-  const [houseNo, setHouseNo] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [addressType, setAddressType] = useState('home');
-  const [focusedField, setFocusedField] = useState(null);
+// Calculate responsive values
+const calculateColumns = () => {
+  if (isLargeTablet && isLandscape) return 4;
+  if (isLargeTablet) return 3;
+  if (isTablet) return 2;
+  return 1; // Mobile
+};
 
-  const handleMapPress = async (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    const mockAddress = `${latitude.toFixed(4)}, ${longitude.toFixed(4)} - Ghaziabad, UP`;
-    
-    setSelectedLocation({
-      latitude,
-      longitude,
-      address: mockAddress,
-    });
+const calculateCardWidth = () => {
+  const columns = calculateColumns();
+  const horizontalMargin = 20 * 2; // Total padding horizontal
+  const gap = (columns - 1) * 12; // Gap between cards
+  return (width - horizontalMargin - gap) / columns;
+};
 
-    setRegion({
-      ...region,
-      latitude,
-      longitude,
-    });
+const CouponCard = ({ coupon, onApply, cardWidth }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const getCurrentLocation = () => {
-    Alert.alert(
-      'Current Location',
-      'Getting your current location...',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            const currentLat = 28.6692 + (Math.random() - 0.5) * 0.01;
-            const currentLng = 77.4538 + (Math.random() - 0.5) * 0.01;
-            
-            setSelectedLocation({
-              latitude: currentLat,
-              longitude: currentLng,
-              address: 'Your Current Location - Ghaziabad, UP',
-            });
-            
-            setRegion({
-              ...region,
-              latitude: currentLat,
-              longitude: currentLng,
-            });
-          },
-        },
-      ]
-    );
-  };
-
-  const handleSaveAddress = () => {
-    if (!fullName || !houseNo || !address || !phone) {
-      Alert.alert('Error', 'Please fill all the fields');
-      return;
-    }
-    Alert.alert('Success', 'Address saved successfully!');
-  };
-
-  const renderForm = () => (
-    <View style={[
-      styles.formSection,
-      isTablet && styles.formSectionTablet,
-      isLargeTablet && styles.formSectionLarge
-    ]}>
-      <Text style={[styles.sectionTitle, isTablet && styles.sectionTitleTablet]}>
-        Address Details
-      </Text>
-
-      {/* Full Name */}
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, isTablet && styles.labelTablet]}>Full Name *</Text>
-        <View style={[
-          styles.inputContainer,
-          isTablet && styles.inputContainerTablet,
-          focusedField === 'fullName' && styles.inputContainerFocused
-        ]}>
-          <Icon name="person-outline" size={isTablet ? 22 : 20} color="#666666" />
-          <TextInput
-            style={[styles.input, isTablet && styles.inputTablet]}
-            value={fullName}
-            onChangeText={setFullName}
-            placeholder="Enter full name"
-            placeholderTextColor="#999999"
-            onFocus={() => setFocusedField('fullName')}
-            onBlur={() => setFocusedField(null)}
-          />
+  return (
+    <View style={[styles.couponCard, { width: cardWidth }]}>
+      {/* Coupon Header with Ribbon */}
+      <View style={styles.couponHeader}>
+        <View style={styles.couponBadge}>
+          <Icon name="pricetag" size={14} color="#000000" />
+          <Text style={styles.couponCode}>{coupon.code}</Text>
+        </View>
+        <View style={styles.discountBadge}>
+          <Text style={styles.discountText}>{coupon.discount}</Text>
         </View>
       </View>
 
-      {/* House No / Flat No */}
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, isTablet && styles.labelTablet]}>House / Flat No. *</Text>
-        <View style={[
-          styles.inputContainer,
-          isTablet && styles.inputContainerTablet,
-          focusedField === 'houseNo' && styles.inputContainerFocused
-        ]}>
-          <Icon name="home-outline" size={isTablet ? 22 : 20} color="#666666" />
-          <TextInput
-            style={[styles.input, isTablet && styles.inputTablet]}
-            value={houseNo}
-            onChangeText={setHouseNo}
-            placeholder="Enter house/flat number"
-            placeholderTextColor="#999999"
-            onFocus={() => setFocusedField('houseNo')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </View>
-      </View>
+      {/* Discount Tag */}
+      {/* <View style={styles.discountTag}>
+        <Text style={styles.discountAmount}>{coupon.discount}</Text>
+        <Text style={styles.discountLabel}>OFF</Text>
+      </View> */}
 
-      {/* Address */}
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, isTablet && styles.labelTablet]}>Address *</Text>
-        <View style={[
-          styles.inputContainer,
-          styles.textAreaContainer,
-          isTablet && styles.textAreaContainerTablet,
-          focusedField === 'address' && styles.inputContainerFocused
-        ]}>
-          <Icon 
-            name="business-outline" 
-            size={isTablet ? 22 : 20} 
-            color="#666666" 
-            style={styles.textAreaIcon} 
-          />
-          <TextInput
-            style={[
-              styles.input, 
-              styles.textArea,
-              isTablet && styles.inputTablet,
-              isTablet && styles.textAreaTablet
-            ]}
-            value={address}
-            onChangeText={setAddress}
-            placeholder="Street, Landmark, Area"
-            placeholderTextColor="#999999"
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            onFocus={() => setFocusedField('address')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </View>
-      </View>
-
-      {/* Phone Number */}
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, isTablet && styles.labelTablet]}>Phone Number *</Text>
-        <View style={[
-          styles.inputContainer,
-          isTablet && styles.inputContainerTablet,
-          focusedField === 'phone' && styles.inputContainerFocused
-        ]}>
-          <Icon name="call-outline" size={isTablet ? 22 : 20} color="#666666" />
-          <TextInput
-            style={[styles.input, isTablet && styles.inputTablet]}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Enter phone number"
-            placeholderTextColor="#999999"
-            keyboardType="phone-pad"
-            onFocus={() => setFocusedField('phone')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </View>
-      </View>
-
-      {/* Address Type */}
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, isTablet && styles.labelTablet]}>Save As</Text>
-        <View style={styles.addressTypeRow}>
-          <TouchableOpacity 
-            style={[
-              styles.typeBtn,
-              isTablet && styles.typeBtnTablet,
-              addressType === 'home' && styles.typeBtnActive
-            ]}
-            onPress={() => setAddressType('home')}
-            activeOpacity={0.7}
-          >
-            <Icon 
-              name={addressType === 'home' ? 'home' : 'home-outline'} 
-              size={isTablet ? 20 : 18} 
-              color={addressType === 'home' ? '#FFFFFF' : '#666666'} 
-            />
-            <Text style={[
-              styles.typeBtnText,
-              isTablet && styles.typeBtnTextTablet,
-              addressType === 'home' && styles.typeBtnTextActive
-            ]}>Home</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.typeBtn,
-              styles.typeBtnOutline,
-              isTablet && styles.typeBtnTablet,
-              addressType === 'work' && styles.typeBtnActive
-            ]}
-            onPress={() => setAddressType('work')}
-            activeOpacity={0.7}
-          >
-            <Icon 
-              name={addressType === 'work' ? 'briefcase' : 'briefcase-outline'} 
-              size={isTablet ? 20 : 18} 
-              color={addressType === 'work' ? '#FFFFFF' : '#666666'} 
-            />
-            <Text style={[
-              styles.typeBtnText,
-              isTablet && styles.typeBtnTextTablet,
-              addressType === 'work' ? styles.typeBtnTextActive : styles.typeBtnTextOutline
-            ]}>Work</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.typeBtn,
-              styles.typeBtnOutline,
-              isTablet && styles.typeBtnTablet,
-              addressType === 'other' && styles.typeBtnActive
-            ]}
-            onPress={() => setAddressType('other')}
-            activeOpacity={0.7}
-          >
-            <Icon 
-              name={addressType === 'other' ? 'location' : 'location-outline'} 
-              size={isTablet ? 20 : 18} 
-              color={addressType === 'other' ? '#FFFFFF' : '#666666'} 
-            />
-            <Text style={[
-              styles.typeBtnText,
-              isTablet && styles.typeBtnTextTablet,
-              addressType === 'other' ? styles.typeBtnTextActive : styles.typeBtnTextOutline
-            ]}>Other</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderMap = () => (
-    <View style={[
-      styles.mapContainer,
-      isTablet && styles.mapContainerTablet,
-      isLargeTablet && styles.mapContainerLarge
-    ]}>
-      <MapView
-        style={styles.map}
-        region={region}
-        onPress={handleMapPress}
-      >
-        <Marker
-          coordinate={{
-            latitude: selectedLocation.latitude,
-            longitude: selectedLocation.longitude,
-          }}
-          title="Selected Location"
-        >
-          <View style={styles.customMarker}>
-            <Icon name="location" size={isTablet ? 48 : 40} color="#000000" />
-          </View>
-        </Marker>
-      </MapView>
-
-      {/* Current Location Button */}
-      <TouchableOpacity 
-        style={[styles.currentLocationBtn, isTablet && styles.currentLocationBtnTablet]}
-        onPress={getCurrentLocation}
-        activeOpacity={0.7}
-      >
-        <Icon name="navigate" size={isTablet ? 24 : 20} color="#000000" />
-      </TouchableOpacity>
-
-      {/* Location Info Card */}
-      <View style={[styles.locationCard, isTablet && styles.locationCardTablet]}>
-        <Icon name="location-outline" size={isTablet ? 24 : 20} color="#000000" />
-        <Text style={[styles.locationText, isTablet && styles.locationTextTablet]} numberOfLines={2}>
-          {selectedLocation.address}
+      <View style={styles.couponContent}>
+        <Text style={styles.couponTitle} numberOfLines={2}>
+          {coupon.title}
         </Text>
-      </View>
-    </View>
-  );
+        <Text style={styles.couponDescription} numberOfLines={3}>
+          {coupon.description}
+        </Text>
 
-  if (isLargeTablet) {
-    // Two-column layout for large tablets
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        
-        {/* Header */}
-        <View style={[styles.header, styles.headerTablet]}>
-          <TouchableOpacity style={[styles.backBtn, styles.backBtnTablet]} activeOpacity={0.7}>
-            <Icon name="arrow-back" size={26} color="#000000" />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, styles.headerTitleTablet]}>Add New Address</Text>
-          <View style={[styles.placeholder, styles.backBtnTablet]} />
-        </View>
-
-        <View style={styles.tabletContainer}>
-          <View style={styles.tabletRow}>
-            {/* Left Column - Map */}
-            <View style={styles.leftColumn}>
-              {renderMap()}
-            </View>
-
-            {/* Right Column - Form */}
-            <ScrollView 
-              style={styles.rightColumn}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.rightColumnContent}
-            >
-              {renderForm()}
-            </ScrollView>
+        <View style={styles.couponFooter}>
+          <View style={styles.validityRow}>
+            <Icon name="time-outline" size={12} color="#666666" />
+            <Text style={styles.validityText}>Valid till {coupon.validity}</Text>
           </View>
-
-          {/* Save Button */}
-          <View style={[styles.bottomContainer, styles.bottomContainerTablet]}>
+          <View style={styles.buttonRow}>
             <TouchableOpacity 
-              style={[styles.saveBtn, styles.saveBtnTablet]} 
-              onPress={handleSaveAddress}
+              style={styles.copyBtnSmall}
+              onPress={handleCopy}
               activeOpacity={0.7}
             >
-              <Text style={[styles.saveText, styles.saveTextTablet]}>Save Address</Text>
-              <Icon name="checkmark-circle" size={24} color="#FFFFFF" />
+              <Icon 
+                name={isCopied ? "checkmark" : "copy-outline"} 
+                size={14} 
+                color={isCopied ? "#4CAF50" : "#666666"} 
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.applyBtn}
+              onPress={() => onApply(coupon)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.applyText}>Apply</Text>
+              <Icon name="arrow-forward" size={14} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
+      
+      {/* Dashed Border Effect */}
+      <View style={styles.dashedBorderLeft} />
+      <View style={styles.dashedBorderRight} />
+    </View>
+  );
+};
+
+export default function CouponModal({ visible, onClose, isModal = false }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const navigation = useNavigation();
+  
+  const translateY = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(0);
+  
+  // Responsive calculations
+  const columns = calculateColumns();
+  const cardWidth = calculateCardWidth();
+  const modalHeight = isTablet ? (isLandscape ? height * 0.85 : height * 0.8) : height * 0.75;
+
+  // Handle Android back button - CORRECTED VERSION
+  useEffect(() => {
+    const handleBackPress = () => {
+      if (visible) {
+        console.log("Back button pressed - Modal visible");
+        handleClose();
+        return true;
+      }
+      return false;
+    };
+
+    let subscription = null;
+    if (visible) {
+      subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    }
+
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, [visible, onClose]);
+
+  const coupons = [
+    {
+      id: 1,
+      code: 'FIRST50',
+      title: '50% OFF on First Order',
+      description: 'Get 50% discount on your first laundry order. Maximum discount up to ₹200.',
+      validity: 'Dec 31, 2026',
+      discount: '50%',
+      color: '#FF6B6B',
+    },
+    {
+      id: 2,
+      code: 'WASH20',
+      title: 'Flat ₹20 OFF',
+      description: 'Flat ₹20 discount on all wash and fold services. No minimum order value.',
+      validity: 'Jan 31, 2026',
+      discount: '₹20',
+      color: '#4ECDC4',
+    },
+    {
+      id: 3,
+      code: 'PREMIUM100',
+      title: '₹100 OFF on Premium Care',
+      description: 'Save ₹100 on premium care services. Minimum order value ₹500.',
+      validity: 'Feb 15, 2026',
+      discount: '₹100',
+      color: '#FFD166',
+    },
+    {
+      id: 4,
+      code: 'EXPRESS15',
+      title: '15% OFF on Express Delivery',
+      description: 'Get 15% discount when you choose express delivery option. Maximum discount ₹150.',
+      validity: 'Jan 20, 2026',
+      discount: '15%',
+      color: '#06D6A0',
+    },
+    {
+      id: 5,
+      code: 'DRY30',
+      title: '30% OFF Dry Cleaning',
+      description: 'Enjoy 30% off on all dry cleaning services. Valid for all items.',
+      validity: 'Mar 10, 2026',
+      discount: '30%',
+      color: '#118AB2',
+    },
+    {
+      id: 6,
+      code: 'IRON10',
+      title: 'Flat ₹10 OFF Ironing',
+      description: 'Get ₹10 discount on ironing services. Applicable on minimum 5 items.',
+      validity: 'Feb 28, 2026',
+      discount: '₹10',
+      color: '#EF476F',
+    },
+    {
+      id: 7,
+      code: 'WEEKEND25',
+      title: 'Weekend Special 25% OFF',
+      description: 'Save 25% on weekend orders. Valid only on Saturday and Sunday.',
+      validity: 'Jan 31, 2026',
+      discount: '25%',
+      color: '#7B68EE',
+    },
+    {
+      id: 8,
+      code: 'BULK200',
+      title: '₹200 OFF Bulk Orders',
+      description: 'Flat ₹200 discount on orders above ₹1000. Perfect for bulk laundry.',
+      validity: 'Mar 31, 2026',
+      discount: '₹200',
+      color: '#FF9F1C',
+    },
+    {
+      id: 9,
+      code: 'SUMMER30',
+      title: 'Summer Special 30% OFF',
+      description: 'Summer special discount on all services. Limited time offer.',
+      validity: 'Jun 30, 2026',
+      discount: '30%',
+      color: '#1DD3B0',
+    },
+    {
+      id: 10,
+      code: 'NEWUSER25',
+      title: '25% OFF for New Users',
+      description: 'Welcome offer for new users. Valid on first three orders.',
+      validity: 'Apr 30, 2026',
+      discount: '25%',
+      color: '#A663CC',
+    },
+  ];
+
+  const filteredCoupons = coupons.filter(coupon => {
+    const query = searchQuery.toLowerCase();
+    return (
+      coupon.code.toLowerCase().includes(query) ||
+      coupon.title.toLowerCase().includes(query) ||
+      coupon.description.toLowerCase().includes(query)
+    );
+  });
+
+  const handleApply = (coupon) => {
+    setSelectedCoupon(coupon);
+    setTimeout(() => {
+      onClose();
+    }, 500);
+  };
+
+  const handleClose = useCallback(() => {
+    navigation.replace("Tab", {screen:"Profile"})
+  }, [onClose]);
+
+  // Organize coupons into rows for grid layout
+  const renderCouponGrid = () => {
+    const rows = [];
+    for (let i = 0; i < filteredCoupons.length; i += columns) {
+      const rowCoupons = filteredCoupons.slice(i, i + columns);
+      rows.push(
+        <View key={`row-${i}`} style={styles.couponRow}>
+          {rowCoupons.map((coupon) => (
+            <CouponCard 
+              key={coupon.id} 
+              coupon={coupon}
+              onApply={handleApply}
+              cardWidth={cardWidth}
+            />
+          ))}
+          {/* Fill empty spaces in last row */}
+          {rowCoupons.length < columns && 
+            Array(columns - rowCoupons.length).fill().map((_, index) => (
+              <View key={`empty-${index}`} style={{ width: cardWidth }} />
+            ))
+          }
+        </View>
+      );
+    }
+    return rows;
+  };
+
+  // Pan Responder for swipe down gesture
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => isModal,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return isModal && scrollY.current <= 0 && gestureState.dy > 0;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (isModal && gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (isModal) {
+          if (gestureState.dy > 100 || gestureState.vy > 0.5) {
+            Animated.timing(translateY, {
+              toValue: height,
+              duration: 300,
+              useNativeDriver: true,
+            }).start(() => {
+              handleClose();
+              translateY.setValue(0);
+            });
+          } else {
+            Animated.spring(translateY, {
+              toValue: 0,
+              useNativeDriver: true,
+            }).start();
+          }
+        }
+      },
+    })
+  ).current;
+
+  const handleScroll = (event) => {
+    scrollY.current = event.nativeEvent.contentOffset.y;
+  };
+
+  // Modal header with responsive font size
+  const modalHeader = (
+    <View style={styles.modalHeader}>
+      <Text style={[styles.modalTitle, isTablet && styles.tabletTitle]}>
+        Available Coupons
+      </Text>
+      <View style={styles.headerStats}>
+        <View style={styles.statsBadge}>
+          <Icon name="pricetag" size={14} color="#FFFFFF" />
+          <Text style={styles.statsText}>
+            {filteredCoupons.length} Available
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.closeBtn}
+          onPress={handleClose}
+          activeOpacity={0.7}
+        >
+          <Icon name="close" size={isTablet ? 28 : 24} color="#000000" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Search bar component
+  const searchBar = (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBox}>
+        <Icon name="search-outline" size={isTablet ? 22 : 20} color="#666666" />
+        <TextInput
+          style={[styles.searchInput, isTablet && styles.tabletSearchInput]}
+          placeholder="Search coupon code or benefits..."
+          placeholderTextColor="#999999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity 
+            onPress={() => setSearchQuery('')}
+            activeOpacity={0.7}
+          >
+            <Icon name="close-circle" size={isTablet ? 22 : 20} color="#999999" />
+          </TouchableOpacity>
+        )}
+      </View>
+      {isTablet && (
+        <TouchableOpacity style={styles.filterBtn}>
+          <Icon name="filter" size={20} color="#666666" />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  // Empty state component
+  const emptyState = (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIcon}>
+        <Icon name="search-outline" size={isTablet ? 64 : 48} color="#CCCCCC" />
+      </View>
+      <Text style={[styles.emptyTitle, isTablet && styles.tabletEmptyTitle]}>
+        No Coupons Found
+      </Text>
+      <Text style={[styles.emptyText, isTablet && styles.tabletEmptyText]}>
+        Try searching with different keywords or check back later
+      </Text>
+    </View>
+  );
+
+  if (!isModal) {
+    // Full Screen Mode
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        onRequestClose={handleClose}
+        presentationStyle="fullScreen"
+      >
+        <SafeAreaView style={styles.fullScreenContainer}>
+          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+          
+          {/* Header */}
+          <View style={styles.fullScreenHeader}>
+            <TouchableOpacity 
+              style={[styles.backBtn, isTablet && styles.tabletBackBtn]}
+              onPress={handleClose}
+              activeOpacity={0.7}
+            >
+              <Icon name="arrow-back" size={isTablet ? 28 : 24} color="#000000" />
+            </TouchableOpacity>
+            <Text style={[styles.fullScreenTitle, isTablet && styles.tabletTitle]}>
+              Available Coupons
+            </Text>
+            <View style={[styles.placeholder, isTablet && styles.tabletPlaceholder]} />
+          </View>
+
+          {/* Search Bar */}
+          {searchBar}
+
+          {/* Coupons Grid */}
+          <ScrollView 
+            style={styles.couponsList}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.couponsContent,
+              isTablet && styles.tabletCouponsContent
+            ]}
+          >
+            {filteredCoupons.length > 0 ? (
+              <>
+                <View style={styles.resultsHeader}>
+                  <Text style={[styles.resultsText, isTablet && styles.tabletResultsText]}>
+                    {filteredCoupons.length} {filteredCoupons.length === 1 ? 'Coupon' : 'Coupons'} Available
+                    {isTablet && ` • ${columns} columns`}
+                  </Text>
+                </View>
+                {renderCouponGrid()}
+              </>
+            ) : (
+              emptyState
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     );
   }
 
-  // Single column layout for mobile and small tablets
+  // Modal Mode (75% screen coverage)
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
-      <View style={[styles.header, isTablet && styles.headerTablet]}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={handleClose}
+      presentationStyle="overFullScreen"
+    >
+      <View style={styles.modalOverlay}>
         <TouchableOpacity 
-          style={[styles.backBtn, isTablet && styles.backBtnTablet]} 
-          activeOpacity={0.7}
+          style={styles.overlayTouchable}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
+        
+        <Animated.View 
+          style={[
+            styles.modalContainer,
+            {
+              transform: [{ translateY }],
+              height: modalHeight,
+            },
+          ]}
+          {...panResponder.panHandlers}
         >
-          <Icon name="arrow-back" size={isTablet ? 26 : 24} color="#000000" />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, isTablet && styles.headerTitleTablet]}>
-          Add New Address
-        </Text>
-        <View style={[styles.placeholder, isTablet && styles.backBtnTablet]} />
-      </View>
+          <SafeAreaView style={styles.modalSafeArea}>
+            {/* Drag Handle */}
+            <View style={styles.dragHandle} />
+            
+            {/* Header */}
+            {modalHeader}
 
-      <ScrollView 
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderMap()}
-        {renderForm()}
-      </ScrollView>
+            {/* Search Bar */}
+            {searchBar}
 
-      {/* Save Button */}
-      <View style={[styles.bottomContainer, isTablet && styles.bottomContainerTablet]}>
-        <TouchableOpacity 
-          style={[styles.saveBtn, isTablet && styles.saveBtnTablet]} 
-          onPress={handleSaveAddress}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.saveText, isTablet && styles.saveTextTablet]}>Save Address</Text>
-          <Icon name="checkmark-circle" size={isTablet ? 24 : 20} color="#FFFFFF" />
-        </TouchableOpacity>
+            {/* Coupons Grid */}
+            <ScrollView 
+              style={styles.couponsList}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={[
+                styles.couponsContent,
+                isTablet && styles.tabletCouponsContent
+              ]}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+            >
+              {filteredCoupons.length > 0 ? (
+                <>
+                  <View style={styles.resultsHeader}>
+                    <Text style={[styles.resultsText, isTablet && styles.tabletResultsText]}>
+                      {filteredCoupons.length} {filteredCoupons.length === 1 ? 'Coupon' : 'Coupons'} Available
+                      {isTablet && ` • ${columns} columns`}
+                    </Text>
+                  </View>
+                  {renderCouponGrid()}
+                </>
+              ) : (
+                emptyState
+              )}
+            </ScrollView>
+          </SafeAreaView>
+        </Animated.View>
       </View>
-    </SafeAreaView>
+    </Modal>
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
-  container: {
+  // Full Screen Styles
+  fullScreenContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
+  fullScreenHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: isTablet ? 30 : 20,
+    paddingVertical: isTablet ? 10 : 10,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
-  },
-  headerTablet: {
-    paddingHorizontal: 32,
-    paddingVertical: 20,
   },
   backBtn: {
     width: 44,
@@ -436,320 +543,446 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backBtnTablet: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+  tabletBackBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: 15,
   },
-  headerTitle: {
+  fullScreenTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#000000',
     letterSpacing: -0.3,
   },
-  headerTitleTablet: {
+  tabletTitle: {
     fontSize: 22,
-    letterSpacing: -0.5,
+    fontWeight: '800',
   },
   placeholder: {
     width: 44,
   },
-  content: {
+  tabletPlaceholder: {
+    width: 54,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  overlayTouchable: {
     flex: 1,
   },
-  
-  // Tablet Layout
-  tabletContainer: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 24,
-  },
-  tabletRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 32,
-  },
-  leftColumn: {
-    flex: 1,
-  },
-  rightColumn: {
-    flex: 1,
-  },
-  rightColumnContent: {
-    paddingBottom: 100,
-  },
-  
-  // Map
-  mapContainer: {
-    height: 300,
-    position: 'relative',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-  },
-  mapContainerTablet: {
-    height: 400,
-    borderRadius: 16,
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: isTablet ? 30 : 24,
+    borderTopRightRadius: isTablet ? 30 : 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderBottomWidth: 1,
   },
-  mapContainerLarge: {
-    height: '100%',
-    minHeight: 500,
+  modalSafeArea: {
+    flex: 1,
+  },
+  dragHandle: {
+    width: isTablet ? 60 : 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#E5E5E5',
+    alignSelf: 'center',
+    marginVertical: isTablet ? 16 : 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: isTablet ? 30 : 20,
+    paddingBottom: 16,
+    paddingTop: isTablet ? 10 : 0,
+  },
+  headerStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: isTablet ? 16 : 12,
+  },
+  statsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#000000',
+    paddingHorizontal: isTablet ? 16 : 12,
+    paddingVertical: isTablet ? 8 : 6,
     borderRadius: 20,
   },
-  map: {
-    width: '100%',
-    height: '100%',
+  statsText: {
+    fontSize: isTablet ? 14 : 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
-  customMarker: {
+  closeBtn: {
+    width: isTablet ? 48 : 40,
+    height: isTablet ? 48 : 40,
+    borderRadius: isTablet ? 24 : 20,
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  currentLocationBtn: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  currentLocationBtnTablet: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    top: 20,
-    right: 20,
-  },
-  locationCard: {
-    position: 'absolute',
-    bottom: 16,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    gap: 12,
-  },
-  locationCardTablet: {
-    bottom: 20,
-    left: 20,
-    right: 20,
-    padding: 20,
-    borderRadius: 16,
-    gap: 16,
-  },
-  locationText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000000',
-    lineHeight: 20,
-  },
-  locationTextTablet: {
-    fontSize: 16,
-    lineHeight: 24,
   },
   
-  // Form
-  formSection: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 100,
-  },
-  formSectionTablet: {
-    paddingHorizontal: 24,
-    paddingTop: 0,
-  },
-  formSectionLarge: {
-    paddingHorizontal: 0,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 20,
-    letterSpacing: -0.2,
-  },
-  sectionTitleTablet: {
-    fontSize: 20,
-    marginBottom: 24,
-    letterSpacing: -0.4,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-    letterSpacing: -0.1,
-  },
-  labelTablet: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  inputContainer: {
+  // Search Styles
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: isTablet ? 30 : 20,
+    paddingBottom: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 16,
-    height: 56,
-    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    gap: isTablet ? 16 : 12,
+    paddingTop:10
   },
-  inputContainerTablet: {
-    height: 64,
-    borderRadius: 14,
-    paddingHorizontal: 20,
-    gap: 14,
+  searchBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: isTablet ? 15 : 12,
+    paddingHorizontal: isTablet ? 20 : 16,
+    height: isTablet ? 60 : 50,
+    gap: isTablet ? 16 : 12,
   },
-  inputContainerFocused: {
-    borderColor: '#000000',
-    backgroundColor: '#FAFAFA',
-  },
-  input: {
+  searchInput: {
     flex: 1,
     fontSize: 15,
     color: '#000000',
     fontWeight: '500',
     padding: 0,
   },
-  inputTablet: {
-    fontSize: 17,
+  tabletSearchInput: {
+    fontSize: 16,
   },
-  textAreaContainer: {
-    height: 100,
-    alignItems: 'flex-start',
-    paddingVertical: 16,
-  },
-  textAreaContainerTablet: {
-    height: 120,
-    paddingVertical: 20,
-  },
-  textAreaIcon: {
-    marginTop: 2,
-  },
-  textArea: {
-    height: 70,
-    textAlignVertical: 'top',
-  },
-  textAreaTablet: {
-    height: 80,
+  filterBtn: {
+    width: isTablet ? 60 : 50,
+    height: isTablet ? 60 : 50,
+    borderRadius: isTablet ? 15 : 12,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
-  // Address Type
-  addressTypeRow: {
-    flexDirection: 'row',
-    gap: 12,
+  // Results Header
+  resultsHeader: {
+    paddingHorizontal: isTablet ? 30 : 20,
+    paddingVertical: isTablet ? 16 : 12,
+    backgroundColor: '#FAFAFA',
+    marginBottom: isTablet ? 8 : 4,
   },
-  typeBtn: {
+  resultsText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666666',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  tabletResultsText: {
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  
+  // Coupons Grid
+  couponsList: {
+    flex: 1,
+  },
+  couponsContent: {
+    paddingBottom: isTablet ? 30 : 20,
+  },
+  tabletCouponsContent: {
+    paddingHorizontal: isTablet ? 10 : 0,
+  },
+  couponRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 12,
+    paddingHorizontal: isTablet ? 30 : 20,
+    marginBottom: isTablet ? 20 : 16,
+  },
+  
+  // Coupon Card
+  couponCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#E5E5E5',
+    borderStyle: 'solid',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    minHeight: 200,
+  },
+  couponHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    backgroundColor: '#F8F9FA',
+  },
+  couponBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  couponCode: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.5,
+  },
+  discountBadge: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  discountText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+  discountTag: {
+    position: 'absolute',
+    top: 12,
+    right: -30,
+    backgroundColor: '#FF6B6B',
+    width: 80,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ rotate: '45deg' }],
+  },
+  discountAmount: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  discountLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+  couponContent: {
+    padding: 16,
+    paddingTop: 8,
+  },
+  couponTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+    lineHeight: 20,
+  },
+  couponDescription: {
+    fontSize: 12,
+    color: '#666666',
+    lineHeight: 18,
+    marginBottom: 16,
+    flex: 1,
+  },
+  couponFooter: {
+    marginTop: 'auto',
+  },
+  validityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  validityText: {
+    fontSize: 11,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  copyBtnSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
+    gap: 6,
+    backgroundColor: '#000000',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  applyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  dashedBorderLeft: {
+    position: 'absolute',
+    left: 0,
+    top: '25%',
+    bottom: '25%',
+    width: 2,
+    borderLeftWidth: 2,
+    borderStyle: 'dashed',
     borderColor: '#E5E5E5',
   },
-  typeBtnTablet: {
-    paddingVertical: 16,
-    borderRadius: 14,
-    gap: 10,
+  dashedBorderRight: {
+    position: 'absolute',
+    right: 0,
+    top: '25%',
+    bottom: '25%',
+    width: 2,
+    borderLeftWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#E5E5E5',
   },
-  typeBtnActive: {
+  
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: isTablet ? 80 : 60,
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    width: isTablet ? 100 : 80,
+    height: isTablet ? 100 : 80,
+    borderRadius: isTablet ? 50 : 40,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: isTablet ? 30 : 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  tabletEmptyTitle: {
+    fontSize: 22,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  tabletEmptyText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  
+  // Example Component Styles (unchanged)
+  exampleContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  exampleHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  exampleTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  exampleContent: {
+    padding: 20,
+  },
+  toggleContainer: {
+    marginBottom: 20,
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 12,
+  },
+  toggleButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E5E5E5',
+    alignItems: 'center',
+  },
+  toggleBtnActive: {
     backgroundColor: '#000000',
     borderColor: '#000000',
   },
-  typeBtnOutline: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E5E5E5',
-  },
-  typeBtnText: {
+  toggleBtnText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#666666',
   },
-  typeBtnTextTablet: {
-    fontSize: 16,
-  },
-  typeBtnTextActive: {
+  toggleBtnTextActive: {
     color: '#FFFFFF',
   },
-  typeBtnTextOutline: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666666',
-  },
-  
-  // Bottom Button
-  bottomContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  bottomContainerTablet: {
-    paddingHorizontal: 32,
-    paddingVertical: 20,
-  },
-  saveBtn: {
+  couponTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    backgroundColor: '#F5F5F5',
+    padding: 16,
     borderRadius: 12,
-    backgroundColor: '#000000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#E5E5E5',
+    borderStyle: 'dashed',
   },
-  saveBtnTablet: {
-    paddingVertical: 18,
-    borderRadius: 14,
-    gap: 10,
+  triggerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  saveText: {
+  triggerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  triggerText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  saveTextTablet: {
-    fontSize: 17,
+    color: '#000000',
   },
 });

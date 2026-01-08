@@ -662,7 +662,7 @@ const ZomatoCartUI = ({ navigation }) => {
         isTablet && styles.headerTablet,
         isSmallPhone && styles.headerSmallPhone
       ]}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[
             styles.backButton, 
             isTablet && styles.backButtonTablet,
@@ -672,7 +672,7 @@ const ZomatoCartUI = ({ navigation }) => {
           activeOpacity={0.7}
         >
           <Icon name="arrow-back" size={isTablet ? 28 : isSmallPhone ? 22 : 24} color="#FFF" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <View style={styles.headerCenter}>
           <Icon name="shopping-cart" size={isTablet ? 24 : isSmallPhone ? 18 : 20} color="#FFF" />
           <Text style={[

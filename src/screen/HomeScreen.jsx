@@ -13,7 +13,10 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+
 
 const App = () => {
   const { width } = useWindowDimensions();
@@ -34,6 +37,7 @@ const App = () => {
   const flatListRef = useRef(null);
   const autoPlayTimer = useRef(null);
   const scrolling = useRef(false);
+  const navigation = useNavigation();
 
   const carouselData = [
     {
@@ -287,7 +291,7 @@ const App = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={[styles.notificationButton, isTablet && styles.notificationButtonTablet]}>
+            <TouchableOpacity style={[styles.notificationButton, isTablet && styles.notificationButtonTablet]} onPress={()=>navigation.navigate('Notifications')}>
               <Ionicons name="notifications-outline" size={isTablet ? 26 : 22} color="#374151" />
               <View style={[styles.notificationDot, isTablet && styles.notificationDotTablet]} />
             </TouchableOpacity>
@@ -350,6 +354,10 @@ const App = () => {
                 Choose what you need
               </Text>
             </View>
+            {/* <TouchableOpacity style={[styles.seeAllButton, isTablet && styles.seeAllButtonTablet]} onPress={() => navigation.navigate('Services')}>
+             <MaterialIcons name="schedule" size={24} color="black" />
+              {/* <Text style={[styles.seeAllButtonText, isTablet && styles.seeAllButtonTextTablet]}>See All</Text> */}
+            {/* </TouchableOpacity> */} 
           </View>
           <FlatList
             data={topRatedData}
@@ -379,7 +387,7 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -387,7 +395,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 15,
+    paddingBottom: 10,
     backgroundColor: '#fff',
     borderBottomColor: '#d1d1d1ff',
     borderBottomWidth: 1,
