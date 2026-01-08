@@ -78,21 +78,23 @@ const CouponCard = ({ coupon, onApply, cardWidth }) => {
         <View style={styles.couponFooter}>
           <View style={styles.validityRow}>
             <Icon name="time-outline" size={12} color="#666666" />
-            <Text style={styles.validityText}>Valid till {coupon.validity}</Text>
+            <Text style={styles.validityText}>
+              Valid till {coupon.validity}
+            </Text>
           </View>
           <View style={styles.buttonRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.copyBtnSmall}
               onPress={handleCopy}
               activeOpacity={0.7}
             >
-              <Icon 
-                name={isCopied ? "checkmark" : "copy-outline"} 
-                size={14} 
-                color={isCopied ? "#4CAF50" : "#666666"} 
+              <Icon
+                name={isCopied ? 'checkmark' : 'copy-outline'}
+                size={14}
+                color={isCopied ? '#4CAF50' : '#666666'}
               />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.applyBtn}
               onPress={() => onApply(coupon)}
               activeOpacity={0.7}
@@ -103,7 +105,7 @@ const CouponCard = ({ coupon, onApply, cardWidth }) => {
           </View>
         </View>
       </View>
-      
+
       {/* Dashed Border Effect */}
       <View style={styles.dashedBorderLeft} />
       <View style={styles.dashedBorderRight} />
@@ -115,20 +117,24 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const navigation = useNavigation();
-  
+
   const translateY = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(0);
-  
+
   // Responsive calculations
   const columns = calculateColumns();
   const cardWidth = calculateCardWidth();
-  const modalHeight = isTablet ? (isLandscape ? height * 0.85 : height * 0.8) : height * 0.75;
+  const modalHeight = isTablet
+    ? isLandscape
+      ? height * 0.85
+      : height * 0.8
+    : height * 0.75;
 
   // Handle Android back button - CORRECTED VERSION
   useEffect(() => {
     const handleBackPress = () => {
       if (visible) {
-        console.log("Back button pressed - Modal visible");
+        console.log('Back button pressed - Modal visible');
         handleClose();
         return true;
       }
@@ -137,7 +143,10 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
 
     let subscription = null;
     if (visible) {
-      subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        handleBackPress,
+      );
     }
 
     return () => {
@@ -152,7 +161,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 1,
       code: 'FIRST50',
       title: '50% OFF on First Order',
-      description: 'Get 50% discount on your first laundry order. Maximum discount up to ₹200.',
+      description:
+        'Get 50% discount on your first laundry order. Maximum discount up to ₹200.',
       validity: 'Dec 31, 2026',
       discount: '50%',
       color: '#FF6B6B',
@@ -161,7 +171,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 2,
       code: 'WASH20',
       title: 'Flat ₹20 OFF',
-      description: 'Flat ₹20 discount on all wash and fold services. No minimum order value.',
+      description:
+        'Flat ₹20 discount on all wash and fold services. No minimum order value.',
       validity: 'Jan 31, 2026',
       discount: '₹20',
       color: '#4ECDC4',
@@ -170,7 +181,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 3,
       code: 'PREMIUM100',
       title: '₹100 OFF on Premium Care',
-      description: 'Save ₹100 on premium care services. Minimum order value ₹500.',
+      description:
+        'Save ₹100 on premium care services. Minimum order value ₹500.',
       validity: 'Feb 15, 2026',
       discount: '₹100',
       color: '#FFD166',
@@ -179,7 +191,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 4,
       code: 'EXPRESS15',
       title: '15% OFF on Express Delivery',
-      description: 'Get 15% discount when you choose express delivery option. Maximum discount ₹150.',
+      description:
+        'Get 15% discount when you choose express delivery option. Maximum discount ₹150.',
       validity: 'Jan 20, 2026',
       discount: '15%',
       color: '#06D6A0',
@@ -188,7 +201,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 5,
       code: 'DRY30',
       title: '30% OFF Dry Cleaning',
-      description: 'Enjoy 30% off on all dry cleaning services. Valid for all items.',
+      description:
+        'Enjoy 30% off on all dry cleaning services. Valid for all items.',
       validity: 'Mar 10, 2026',
       discount: '30%',
       color: '#118AB2',
@@ -197,7 +211,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 6,
       code: 'IRON10',
       title: 'Flat ₹10 OFF Ironing',
-      description: 'Get ₹10 discount on ironing services. Applicable on minimum 5 items.',
+      description:
+        'Get ₹10 discount on ironing services. Applicable on minimum 5 items.',
       validity: 'Feb 28, 2026',
       discount: '₹10',
       color: '#EF476F',
@@ -206,7 +221,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 7,
       code: 'WEEKEND25',
       title: 'Weekend Special 25% OFF',
-      description: 'Save 25% on weekend orders. Valid only on Saturday and Sunday.',
+      description:
+        'Save 25% on weekend orders. Valid only on Saturday and Sunday.',
       validity: 'Jan 31, 2026',
       discount: '25%',
       color: '#7B68EE',
@@ -215,7 +231,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 8,
       code: 'BULK200',
       title: '₹200 OFF Bulk Orders',
-      description: 'Flat ₹200 discount on orders above ₹1000. Perfect for bulk laundry.',
+      description:
+        'Flat ₹200 discount on orders above ₹1000. Perfect for bulk laundry.',
       validity: 'Mar 31, 2026',
       discount: '₹200',
       color: '#FF9F1C',
@@ -224,7 +241,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       id: 9,
       code: 'SUMMER30',
       title: 'Summer Special 30% OFF',
-      description: 'Summer special discount on all services. Limited time offer.',
+      description:
+        'Summer special discount on all services. Limited time offer.',
       validity: 'Jun 30, 2026',
       discount: '30%',
       color: '#1DD3B0',
@@ -249,7 +267,7 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
     );
   });
 
-  const handleApply = (coupon) => {
+  const handleApply = coupon => {
     setSelectedCoupon(coupon);
     setTimeout(() => {
       onClose();
@@ -257,7 +275,8 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
   };
 
   const handleClose = useCallback(() => {
-    navigation.replace("Tab", {screen:"Profile"})
+    !isModal && navigation.replace('Tab', { screen: 'Profile' });
+    isModal && onClose();
   }, [onClose]);
 
   // Organize coupons into rows for grid layout
@@ -267,21 +286,22 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       const rowCoupons = filteredCoupons.slice(i, i + columns);
       rows.push(
         <View key={`row-${i}`} style={styles.couponRow}>
-          {rowCoupons.map((coupon) => (
-            <CouponCard 
-              key={coupon.id} 
+          {rowCoupons.map(coupon => (
+            <CouponCard
+              key={coupon.id}
               coupon={coupon}
               onApply={handleApply}
               cardWidth={cardWidth}
             />
           ))}
           {/* Fill empty spaces in last row */}
-          {rowCoupons.length < columns && 
-            Array(columns - rowCoupons.length).fill().map((_, index) => (
-              <View key={`empty-${index}`} style={{ width: cardWidth }} />
-            ))
-          }
-        </View>
+          {rowCoupons.length < columns &&
+            Array(columns - rowCoupons.length)
+              .fill()
+              .map((_, index) => (
+                <View key={`empty-${index}`} style={{ width: cardWidth }} />
+              ))}
+        </View>,
       );
     }
     return rows;
@@ -290,7 +310,7 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
   // Pan Responder for swipe down gesture
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => isModal,
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
         return isModal && scrollY.current <= 0 && gestureState.dy > 0;
       },
@@ -308,7 +328,6 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
               useNativeDriver: true,
             }).start(() => {
               handleClose();
-              translateY.setValue(0);
             });
           } else {
             Animated.spring(translateY, {
@@ -318,10 +337,10 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
           }
         }
       },
-    })
+    }),
   ).current;
 
-  const handleScroll = (event) => {
+  const handleScroll = event => {
     scrollY.current = event.nativeEvent.contentOffset.y;
   };
 
@@ -338,7 +357,7 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
             {filteredCoupons.length} Available
           </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.closeBtn}
           onPress={handleClose}
           activeOpacity={0.7}
@@ -362,11 +381,15 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setSearchQuery('')}
             activeOpacity={0.7}
           >
-            <Icon name="close-circle" size={isTablet ? 22 : 20} color="#999999" />
+            <Icon
+              name="close-circle"
+              size={isTablet ? 22 : 20}
+              color="#999999"
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -404,39 +427,54 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       >
         <SafeAreaView style={styles.fullScreenContainer}>
           <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-          
+
           {/* Header */}
           <View style={styles.fullScreenHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.backBtn, isTablet && styles.tabletBackBtn]}
               onPress={handleClose}
               activeOpacity={0.7}
             >
-              <Icon name="arrow-back" size={isTablet ? 28 : 24} color="#000000" />
+              <Icon
+                name="arrow-back"
+                size={isTablet ? 28 : 24}
+                color="#000000"
+              />
             </TouchableOpacity>
-            <Text style={[styles.fullScreenTitle, isTablet && styles.tabletTitle]}>
+            <Text
+              style={[styles.fullScreenTitle, isTablet && styles.tabletTitle]}
+            >
               Available Coupons
             </Text>
-            <View style={[styles.placeholder, isTablet && styles.tabletPlaceholder]} />
+            <View
+              style={[styles.placeholder, isTablet && styles.tabletPlaceholder]}
+            />
           </View>
 
           {/* Search Bar */}
           {searchBar}
 
           {/* Coupons Grid */}
-          <ScrollView 
+          <ScrollView
             style={styles.couponsList}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.couponsContent,
-              isTablet && styles.tabletCouponsContent
+              isTablet && styles.tabletCouponsContent,
             ]}
           >
             {filteredCoupons.length > 0 ? (
               <>
                 <View style={styles.resultsHeader}>
-                  <Text style={[styles.resultsText, isTablet && styles.tabletResultsText]}>
-                    {filteredCoupons.length} {filteredCoupons.length === 1 ? 'Coupon' : 'Coupons'} Available
+                  <Text
+                    style={[
+                      styles.resultsText,
+                      isTablet && styles.tabletResultsText,
+                    ]}
+                  >
+                    {filteredCoupons.length}{' '}
+                    {filteredCoupons.length === 1 ? 'Coupon' : 'Coupons'}{' '}
+                    Available
                     {isTablet && ` • ${columns} columns`}
                   </Text>
                 </View>
@@ -461,13 +499,13 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
       presentationStyle="overFullScreen"
     >
       <View style={styles.modalOverlay}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.overlayTouchable}
           activeOpacity={1}
           onPress={handleClose}
         />
-        
-        <Animated.View 
+
+        <Animated.View
           style={[
             styles.modalContainer,
             {
@@ -480,7 +518,7 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
           <SafeAreaView style={styles.modalSafeArea}>
             {/* Drag Handle */}
             <View style={styles.dragHandle} />
-            
+
             {/* Header */}
             {modalHeader}
 
@@ -488,12 +526,12 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
             {searchBar}
 
             {/* Coupons Grid */}
-            <ScrollView 
+            <ScrollView
               style={styles.couponsList}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.couponsContent,
-                isTablet && styles.tabletCouponsContent
+                isTablet && styles.tabletCouponsContent,
               ]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
@@ -501,8 +539,15 @@ export default function CouponModal({ visible, onClose, isModal = false }) {
               {filteredCoupons.length > 0 ? (
                 <>
                   <View style={styles.resultsHeader}>
-                    <Text style={[styles.resultsText, isTablet && styles.tabletResultsText]}>
-                      {filteredCoupons.length} {filteredCoupons.length === 1 ? 'Coupon' : 'Coupons'} Available
+                    <Text
+                      style={[
+                        styles.resultsText,
+                        isTablet && styles.tabletResultsText,
+                      ]}
+                    >
+                      {filteredCoupons.length}{' '}
+                      {filteredCoupons.length === 1 ? 'Coupon' : 'Coupons'}{' '}
+                      Available
                       {isTablet && ` • ${columns} columns`}
                     </Text>
                   </View>
@@ -626,7 +671,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   // Search Styles
   searchContainer: {
     flexDirection: 'row',
@@ -637,7 +682,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
     gap: isTablet ? 16 : 12,
-    paddingTop:10
+    paddingTop: 10,
   },
   searchBox: {
     flex: 1,
@@ -667,7 +712,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   // Results Header
   resultsHeader: {
     paddingHorizontal: isTablet ? 30 : 20,
@@ -686,7 +731,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 1,
   },
-  
+
   // Coupons Grid
   couponsList: {
     flex: 1,
@@ -704,7 +749,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: isTablet ? 30 : 20,
     marginBottom: isTablet ? 20 : 16,
   },
-  
+
   // Coupon Card
   couponCard: {
     backgroundColor: '#FFFFFF',
@@ -865,7 +910,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: '#E5E5E5',
   },
-  
+
   // Empty State
   emptyState: {
     alignItems: 'center',
@@ -902,7 +947,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
-  
+
   // Example Component Styles (unchanged)
   exampleContainer: {
     flex: 1,

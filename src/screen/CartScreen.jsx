@@ -12,12 +12,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import IconCommunity from 'react-native-vector-icons/MaterialCommunityIcons';
+import CouponScreen from './CouponSceeen';
 
 const ZomatoCartUI = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
   const isTablet = width >= 768;
   const isLargeTablet = width >= 1024;
   const isSmallPhone = height <= 667;
+
+  const [isCouponModal, setIsCouponModal] = useState(false);
 
   const [items, setItems] = useState([
     {
@@ -400,7 +403,7 @@ const ZomatoCartUI = ({ navigation }) => {
         ]}>
           <Icon name="local-offer" size={isTablet ? 20 : isSmallPhone ? 16 : 18} color="#000000" />
         </View>
-        <View style={styles.offerContent}>
+        <TouchableOpacity style={styles.offerContent} onPress={()=>setIsCouponModal(true)}>
           <Text style={[
             styles.offerText, 
             isTablet && styles.offerTextTablet,
@@ -415,7 +418,7 @@ const ZomatoCartUI = ({ navigation }) => {
           ]}>
             Save more on this order
           </Text>
-        </View>
+        </TouchableOpacity>
         <Icon
           name="chevron-right"
           size={isTablet ? 24 : isSmallPhone ? 18 : 20}
@@ -655,6 +658,7 @@ const ZomatoCartUI = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      {isCouponModal && <CouponScreen isModal={true} onClose={() => setIsCouponModal(false)} />}
 
       {/* Header - Fixed */}
       <View style={[

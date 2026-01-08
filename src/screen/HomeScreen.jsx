@@ -378,7 +378,7 @@ const App = () => {
         </View>
 
         {/* Bottom Spacing */}
-        <View style={{ height: isTablet ? 80 : 120 }} />
+        <View style={{ height: isTablet ? 40 : 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
