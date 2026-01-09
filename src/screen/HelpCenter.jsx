@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   TextInput,
   Linking,
@@ -13,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const HelpCenterScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -247,7 +247,7 @@ const HelpCenterScreen = ({ navigation }) => {
           style={styles.headerButton}
           onPress={() => navigation.navigate('ContactHistory')}
         >
-          <Icon name="time" size={24} color="#000000" />
+          {/* <Icon name="time" size={24} color="#000000" /> */}
         </TouchableOpacity>
       </View>
 
@@ -269,7 +269,7 @@ const HelpCenterScreen = ({ navigation }) => {
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
           <View style={styles.searchBox}>
             <Icon name="search" size={20} color="#666666" />
             <TextInput
@@ -285,7 +285,7 @@ const HelpCenterScreen = ({ navigation }) => {
               </TouchableOpacity>
             )}
           </View>
-        </View>
+        </View> */}
 
         {/* Categories */}
         <View style={styles.section}>
@@ -311,7 +311,7 @@ const HelpCenterScreen = ({ navigation }) => {
                   <Icon 
                     name={category.icon} 
                     size={20} 
-                    color={selectedCategory === category.id ? '#000000' : '#666666'} 
+                    color={selectedCategory === category.id ? '#eaeaeaff' : '#666666'} 
                   />
                 </View>
                 <Text style={[
@@ -326,7 +326,7 @@ const HelpCenterScreen = ({ navigation }) => {
         </View>
 
         {/* Popular Articles */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Popular Articles</Text>
             <TouchableOpacity>
@@ -351,7 +351,7 @@ const HelpCenterScreen = ({ navigation }) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </View> */}
 
         {/* Contact Options */}
         <View style={styles.section}>
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
   },
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    // backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
   },

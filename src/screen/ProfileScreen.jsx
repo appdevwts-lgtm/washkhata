@@ -223,13 +223,13 @@ export default function ProfileScreen() {
               />
             </View>
             <View style={styles.menuGridColumn}>
-              <MenuItem 
+              {/* <MenuItem 
                 icon="card-outline"
                 title="Payment Methods"
                 subtitle="Cards, UPI & more"
-                onPress={() => navigation.navigate('PaymentMethod')}
+                onPress={() => navigation.navigate('Payment')}
                 isTablet={isTablet}
-              />
+              /> */}
               <MenuItem 
                 icon="pricetag-outline"
                 title="My Coupons"

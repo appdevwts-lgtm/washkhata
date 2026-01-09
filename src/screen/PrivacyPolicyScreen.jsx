@@ -232,7 +232,7 @@ Last Updated: ${new Date().toLocaleDateString('en-US', {
         </View>
 
         {/* Settings Section */}
-        <View style={styles.settingsSection}>
+        {/* <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Privacy Settings</Text>
 
           <View style={styles.settingItem}>
@@ -264,10 +264,10 @@ Last Updated: ${new Date().toLocaleDateString('en-US', {
               thumbColor={marketingOptIn ? '#FFFFFF' : '#FFFFFF'}
             />
           </View>
-        </View>
+        </View> */}
 
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        {/* <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.actionButton, styles.saveButton]}
             onPress={handleAcceptTerms}
@@ -280,13 +280,12 @@ Last Updated: ${new Date().toLocaleDateString('en-US', {
           <TouchableOpacity
             style={[styles.actionButton, styles.downloadButton]}
             onPress={() => {
-              /* Handle PDF download */
             }}
           >
             <Icon name="download-outline" size={20} color="#000000" />
             <Text style={styles.downloadButtonText}>Download Policy</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Footer */}
         <View style={styles.footer}>

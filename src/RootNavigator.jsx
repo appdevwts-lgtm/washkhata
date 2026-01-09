@@ -14,6 +14,8 @@ import PaymentMethod from './screen/PaymentMethod';
 import PrivacyPolicyScreen from './screen/PrivacyPolicyScreen';
 import TermsConditionScreen from './screen/TermsConditionScreen';
 import NotificationsScreen from './screen/NotificationScreen';
+import OrderDetailsScreen from './screen/OrderDetailsScreen';
+import PaymentScreen from './screen/PaymentScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -82,6 +84,16 @@ export default function RootNavigator() {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="OrderDetails"
+        component={OrderDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Payment"
+        component={PaymentScreen}
         options={{ headerShown: false }}
       />
 

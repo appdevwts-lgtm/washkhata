@@ -11,62 +11,75 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
-const OrderCard = ({ order, isTablet, isLargeTablet }) => {
+const OrderCard = ({ order, isTablet, isLargeTablet, navigation }) => {
   const statusConfig = {
-    processing: { 
-      color: '#6366F1', 
-      bg: '#EEF2FF', 
+    processing: {
+      color: '#6366F1',
+      bg: '#EEF2FF',
       text: 'In Progress',
-      icon: 'time-outline'
+      icon: 'time-outline',
     },
-    completed: { 
-      color: '#10B981', 
-      bg: '#ECFDF5', 
+    completed: {
+      color: '#10B981',
+      bg: '#ECFDF5',
       text: 'Completed',
-      icon: 'checkmark-circle-outline'
+      icon: 'checkmark-circle-outline',
     },
-    pending: { 
-      color: '#F59E0B', 
-      bg: '#FEF3C7', 
+    pending: {
+      color: '#F59E0B',
+      bg: '#FEF3C7',
       text: 'Pending',
-      icon: 'hourglass-outline'
-    }
+      icon: 'hourglass-outline',
+    },
   };
 
   const config = statusConfig[order.status];
 
   return (
-    <TouchableOpacity 
-      style={[
-        styles.card,
-        isTablet && styles.cardTablet,
-      ]} 
+    <TouchableOpacity
+      style={[styles.card, isTablet && styles.cardTablet]}
       activeOpacity={0.6}
+      onPress={() => navigation.navigate('OrderDetails', { order })}
     >
       <View style={styles.cardHeader}>
         <View style={styles.orderInfo}>
-          <Text style={[styles.orderNumber, isTablet && styles.orderNumberTablet]}>
+          <Text
+            style={[styles.orderNumber, isTablet && styles.orderNumberTablet]}
+          >
             Order #{order.id}
           </Text>
           <View style={styles.dateRow}>
-            <Icon name="calendar-outline" size={isTablet ? 15 : 13} color="#94A3B8" />
+            <Icon
+              name="calendar-outline"
+              size={isTablet ? 15 : 13}
+              color="#94A3B8"
+            />
             <Text style={[styles.dateText, isTablet && styles.dateTextTablet]}>
               {order.date}
             </Text>
           </View>
         </View>
-        <View style={[
-          styles.statusBadge, 
-          { backgroundColor: config.bg },
-          isTablet && styles.statusBadgeTablet
-        ]}>
-          <Icon name={config.icon} size={isTablet ? 16 : 14} color={config.color} />
-          <Text style={[
-            styles.statusText, 
-            { color: config.color },
-            isTablet && styles.statusTextTablet
-          ]}>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: config.bg },
+            isTablet && styles.statusBadgeTablet,
+          ]}
+        >
+          <Icon
+            name={config.icon}
+            size={isTablet ? 16 : 14}
+            color={config.color}
+          />
+          <Text
+            style={[
+              styles.statusText,
+              { color: config.color },
+              isTablet && styles.statusTextTablet,
+            ]}
+          >
             {config.text}
           </Text>
         </View>
@@ -75,59 +88,86 @@ const OrderCard = ({ order, isTablet, isLargeTablet }) => {
       <View style={styles.divider} />
 
       <View style={styles.cardBody}>
-        <View style={[
-          styles.metaRow,
-          isLargeTablet && styles.metaRowLarge
-        ]}>
+        <View style={[styles.metaRow, isLargeTablet && styles.metaRowLarge]}>
           <View style={styles.metaItem}>
-            <View style={[
-              styles.metaIcon, 
-              { backgroundColor: '#F0F9FF' },
-              isTablet && styles.metaIconTablet
-            ]}>
-              <Icon name="shirt-outline" size={isTablet ? 20 : 16} color="#0EA5E9" />
+            <View
+              style={[
+                styles.metaIcon,
+                { backgroundColor: '#F0F9FF' },
+                isTablet && styles.metaIconTablet,
+              ]}
+            >
+              <Icon
+                name="shirt-outline"
+                size={isTablet ? 20 : 16}
+                color="#0EA5E9"
+              />
             </View>
             <View>
-              <Text style={[styles.metaLabel, isTablet && styles.metaLabelTablet]}>
+              <Text
+                style={[styles.metaLabel, isTablet && styles.metaLabelTablet]}
+              >
                 Items
               </Text>
-              <Text style={[styles.metaValue, isTablet && styles.metaValueTablet]}>
+              <Text
+                style={[styles.metaValue, isTablet && styles.metaValueTablet]}
+              >
                 {order.items}
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.metaItem}>
-            <View style={[
-              styles.metaIcon, 
-              { backgroundColor: '#FEF3C7' },
-              isTablet && styles.metaIconTablet
-            ]}>
-              <Icon name="calendar-outline" size={isTablet ? 20 : 16} color="#F59E0B" />
+            <View
+              style={[
+                styles.metaIcon,
+                { backgroundColor: '#FEF3C7' },
+                isTablet && styles.metaIconTablet,
+              ]}
+            >
+              <Icon
+                name="calendar-outline"
+                size={isTablet ? 20 : 16}
+                color="#F59E0B"
+              />
             </View>
             <View>
-              <Text style={[styles.metaLabel, isTablet && styles.metaLabelTablet]}>
+              <Text
+                style={[styles.metaLabel, isTablet && styles.metaLabelTablet]}
+              >
                 Pickup
               </Text>
-              <Text style={[styles.metaValue, isTablet && styles.metaValueTablet]}>
+              <Text
+                style={[styles.metaValue, isTablet && styles.metaValueTablet]}
+              >
                 {order.pickup}
               </Text>
             </View>
           </View>
 
           <View style={styles.metaItem}>
-            <View style={[
-              styles.metaIcon, 
-              { backgroundColor: '#F0FDF4' },
-              isTablet && styles.metaIconTablet
-            ]}>
-              <Icon name="car-outline" size={isTablet ? 20 : 16} color="#10B981" />
+            <View
+              style={[
+                styles.metaIcon,
+                { backgroundColor: '#F0FDF4' },
+                isTablet && styles.metaIconTablet,
+              ]}
+            >
+              <Icon
+                name="car-outline"
+                size={isTablet ? 20 : 16}
+                color="#10B981"
+              />
             </View>
             <View>
-              <Text style={[styles.metaLabel, isTablet && styles.metaLabelTablet]}>
+              <Text
+                style={[styles.metaLabel, isTablet && styles.metaLabelTablet]}
+              >
                 Delivery
               </Text>
-              <Text style={[styles.metaValue, isTablet && styles.metaValueTablet]}>
+              <Text
+                style={[styles.metaValue, isTablet && styles.metaValueTablet]}
+              >
                 {order.delivery}
               </Text>
             </View>
@@ -137,21 +177,29 @@ const OrderCard = ({ order, isTablet, isLargeTablet }) => {
 
       <View style={[styles.cardFooter, isTablet && styles.cardFooterTablet]}>
         <View style={styles.priceSection}>
-          <Text style={[styles.priceLabel, isTablet && styles.priceLabelTablet]}>
+          <Text
+            style={[styles.priceLabel, isTablet && styles.priceLabelTablet]}
+          >
             Total
           </Text>
           <Text style={[styles.price, isTablet && styles.priceTablet]}>
             ${order.amount}
           </Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.actionButton, isTablet && styles.actionButtonTablet]} 
+        <TouchableOpacity
+          style={[styles.actionButton, isTablet && styles.actionButtonTablet]}
           activeOpacity={0.7}
         >
-          <Text style={[styles.actionText, isTablet && styles.actionTextTablet]}>
+          <Text
+            style={[styles.actionText, isTablet && styles.actionTextTablet]}
+          >
             View Details
           </Text>
-          <Icon name="chevron-forward" size={isTablet ? 20 : 18} color="#6366F1" />
+          <Icon
+            name="chevron-forward"
+            size={isTablet ? 20 : 18}
+            color="#6366F1"
+          />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -162,10 +210,11 @@ export default function LaundryApp() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const isLargeTablet = width >= 1024;
-  
+
   const numColumns = isTablet ? 2 : 1;
 
   const [activeTab, setActiveTab] = useState('all');
+  const navigation = useNavigation();
 
   const orders = [
     {
@@ -175,7 +224,7 @@ export default function LaundryApp() {
       items: 12,
       pickup: 'Today',
       delivery: 'Jan 8',
-      amount: '45.00'
+      amount: '45.00',
     },
     {
       id: '2846',
@@ -184,7 +233,7 @@ export default function LaundryApp() {
       items: 8,
       pickup: 'Jan 4',
       delivery: 'Jan 5',
-      amount: '32.50'
+      amount: '32.50',
     },
     {
       id: '2845',
@@ -193,7 +242,7 @@ export default function LaundryApp() {
       items: 15,
       pickup: 'Jan 7',
       delivery: 'Jan 10',
-      amount: '58.00'
+      amount: '58.00',
     },
     {
       id: '2844',
@@ -202,7 +251,7 @@ export default function LaundryApp() {
       items: 10,
       pickup: 'Jan 2',
       delivery: 'Jan 4',
-      amount: '38.75'
+      amount: '38.75',
     },
     {
       id: '2843',
@@ -211,7 +260,7 @@ export default function LaundryApp() {
       items: 6,
       pickup: 'Jan 1',
       delivery: 'Jan 3',
-      amount: '28.00'
+      amount: '28.00',
     },
     {
       id: '2842',
@@ -220,43 +269,49 @@ export default function LaundryApp() {
       items: 14,
       pickup: 'Dec 30',
       delivery: 'Jan 2',
-      amount: '52.50'
-    }
+      amount: '52.50',
+    },
   ];
 
   const tabs = [
     { id: 'all', label: 'All', icon: 'grid-outline' },
     { id: 'processing', label: 'Active', icon: 'time-outline' },
     { id: 'completed', label: 'Done', icon: 'checkmark-circle-outline' },
-    { id: 'pending', label: 'Pending', icon: 'hourglass-outline' }
+    { id: 'pending', label: 'Pending', icon: 'hourglass-outline' },
   ];
 
-  const filteredOrders = activeTab === 'all' 
-    ? orders 
-    : orders.filter(o => o.status === activeTab);
+  const filteredOrders =
+    activeTab === 'all' ? orders : orders.filter(o => o.status === activeTab);
 
   const renderOrderCard = ({ item }) => (
-    <View style={[
-      styles.orderCardWrapper,
-      isTablet && styles.orderCardWrapperTablet
-    ]}>
-      <OrderCard order={item} isTablet={isTablet} isLargeTablet={isLargeTablet} />
+    <View
+      style={[
+        styles.orderCardWrapper,
+        isTablet && styles.orderCardWrapperTablet,
+      ]}
+    >
+      <OrderCard
+        navigation={navigation}
+        order={item}
+        isTablet={isTablet}
+        isLargeTablet={isLargeTablet}
+      />
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+
       <View style={[styles.header, isTablet && styles.headerTablet]}>
         <View style={isTablet && styles.headerInner}>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.tabContainer}
             contentContainerStyle={[
               styles.tabContent,
-              isTablet && styles.tabContentTablet
+              isTablet && styles.tabContentTablet,
             ]}
           >
             {tabs.map(tab => (
@@ -266,20 +321,22 @@ export default function LaundryApp() {
                 style={[
                   styles.tab,
                   isTablet && styles.tabTablet,
-                  activeTab === tab.id && styles.tabActive
+                  activeTab === tab.id && styles.tabActive,
                 ]}
                 activeOpacity={0.7}
               >
-                <Icon 
-                  name={tab.icon} 
-                  size={isTablet ? 20 : 18} 
-                  color={activeTab === tab.id ? '#6366F1' : '#64748B'} 
+                <Icon
+                  name={tab.icon}
+                  size={isTablet ? 20 : 18}
+                  color={activeTab === tab.id ? '#6366F1' : '#64748B'}
                 />
-                <Text style={[
-                  styles.tabText,
-                  isTablet && styles.tabTextTablet,
-                  activeTab === tab.id && styles.tabTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    isTablet && styles.tabTextTablet,
+                    activeTab === tab.id && styles.tabTextActive,
+                  ]}
+                >
                   {tab.label}
                 </Text>
               </TouchableOpacity>
@@ -298,7 +355,7 @@ export default function LaundryApp() {
           numColumns={numColumns}
           contentContainerStyle={[
             styles.contentContainer,
-            styles.contentContainerTablet
+            styles.contentContainerTablet,
           ]}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
@@ -310,18 +367,17 @@ export default function LaundryApp() {
         />
       ) : (
         // Single column for mobile
-        <ScrollView 
+        <ScrollView
           style={styles.content}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
         >
-          <Text style={styles.sectionTitle}>
-            Recent Orders
-          </Text>
+          <Text style={styles.sectionTitle}>Recent Orders</Text>
           {filteredOrders.map(order => (
-            <OrderCard 
-              key={order.id} 
-              order={order} 
+            <OrderCard
+              key={order.id}
+              order={order}
+              navigation={navigation}
               isTablet={isTablet}
               isLargeTablet={isLargeTablet}
             />

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Linking,
   Switch,
@@ -13,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TermsAndConditionsScreen = ({ navigation }) => {
   const [acceptedAll, setAcceptedAll] = useState(false);
@@ -257,6 +257,92 @@ We reserve the right to modify these terms at any time. Continued use after chan
 
   const activeContent = sections.find(section => section.id === activeSection);
 
+  // Function to render formatted text with bold support
+  const renderFormattedText = text => {
+    const lines = text.split('\n');
+    return lines.map((line, lineIndex) => {
+      // Check if line starts with **
+      const boldMatch = line.match(/^\*\*(.+?)\*\*(.*)$/);
+
+      if (boldMatch) {
+        // This is a heading/bold line
+        return (
+          <View key={lineIndex} style={styles.textLineContainer}>
+            <Text style={styles.boldText}>{boldMatch[1]}</Text>
+            {boldMatch[2] && (
+              <Text style={styles.contentText}>{boldMatch[2]}</Text>
+            )}
+          </View>
+        );
+      }
+
+      // Check for inline bold text
+      const parts = [];
+      let remainingText = line;
+      let partIndex = 0;
+
+      const inlineBoldRegex = /\*\*(.+?)\*\*/g;
+      let match;
+      let lastIndex = 0;
+
+      while ((match = inlineBoldRegex.exec(line)) !== null) {
+        // Add text before the bold part
+        if (match.index > lastIndex) {
+          parts.push(
+            <Text
+              key={`text-${lineIndex}-${partIndex++}`}
+              style={styles.contentText}
+            >
+              {line.substring(lastIndex, match.index)}
+            </Text>,
+          );
+        }
+
+        // Add the bold part
+        parts.push(
+          <Text
+            key={`bold-${lineIndex}-${partIndex++}`}
+            style={styles.boldText}
+          >
+            {match[1]}
+          </Text>,
+        );
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      // Add remaining text
+      if (lastIndex < line.length) {
+        parts.push(
+          <Text
+            key={`text-${lineIndex}-${partIndex++}`}
+            style={styles.contentText}
+          >
+            {line.substring(lastIndex)}
+          </Text>,
+        );
+      }
+
+      // If no bold formatting found, return plain text
+      if (parts.length === 0) {
+        return (
+          <Text key={lineIndex} style={styles.contentText}>
+            {line}
+            {'\n'}
+          </Text>
+        );
+      }
+
+      // Return formatted line
+      return (
+        <Text key={lineIndex} style={styles.textLineContainer}>
+          {parts}
+          {'\n'}
+        </Text>
+      );
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -319,7 +405,7 @@ We reserve the right to modify these terms at any time. Continued use after chan
               <Icon
                 name={section.icon}
                 size={18}
-                color={activeSection === section.id ? '#000000' : '#666666'}
+                color={activeSection === section.id ? '#eaeaeaff' : '#666666'}
               />
               <Text
                 style={[
@@ -337,7 +423,7 @@ We reserve the right to modify these terms at any time. Continued use after chan
         <View style={styles.contentSection}>
           <Text style={styles.contentTitle}>{activeContent?.title}</Text>
           <ScrollView style={styles.contentScroll}>
-            <Text style={styles.contentText}>{activeContent?.content}</Text>
+            {renderFormattedText(activeContent?.content || '')}
           </ScrollView>
         </View>
 
@@ -372,76 +458,6 @@ We reserve the right to modify these terms at any time. Continued use after chan
             <TouchableOpacity style={styles.linkCard} onPress={openWebsite}>
               <Icon name="globe" size={24} color="#000000" />
               <Text style={styles.linkText}>Website</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Acceptance Section */}
-        <View style={styles.acceptanceSection}>
-          <Text style={styles.acceptanceTitle}>Accept Terms</Text>
-
-          {/* Accept All */}
-          <TouchableOpacity
-            style={styles.acceptAllCard}
-            onPress={handleAcceptAll}
-            activeOpacity={0.7}
-          >
-            <View style={styles.acceptAllLeft}>
-              <View
-                style={[styles.checkbox, acceptedAll && styles.checkboxChecked]}
-              >
-                {acceptedAll && (
-                  <Icon name="checkmark" size={16} color="#FFFFFF" />
-                )}
-              </View>
-              <View>
-                <Text style={styles.acceptAllTitle}>
-                  Accept Terms & Conditions
-                </Text>
-                <Text style={styles.acceptAllSubtitle}>
-                  Agree to Terms of Service and related policies
-                </Text>
-              </View>
-            </View>
-            <Icon name="chevron-forward" size={20} color="#666666" />
-          </TouchableOpacity>
-
-          {/* Individual Toggles */}
-          <View style={styles.toggleSection}>
-            <View style={styles.toggleItem}>
-              <View style={styles.toggleInfo}>
-                <Text style={styles.toggleTitle}>Terms of Service</Text>
-                <Text style={styles.toggleDescription}>
-                  Agreement to service terms and conditions
-                </Text>
-              </View>
-              <Switch
-                value={acceptedTerms}
-                onValueChange={() => handleIndividualToggle('terms')}
-                trackColor={{ false: '#E5E5E5', true: '#000000' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                !acceptedTerms && styles.continueButtonDisabled,
-              ]}
-              onPress={handleContinue}
-              disabled={!acceptedTerms}
-            >
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -528,7 +544,7 @@ const styles = StyleSheet.create({
   },
   appHeader: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -567,7 +583,7 @@ const styles = StyleSheet.create({
   },
   tabsScroll: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    // paddingVertical: 160,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -580,7 +596,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#F5F5F5',
     marginRight: 12,
-    minWidth: 120,
+    marginBottom:10
   },
   tabButtonActive: {
     backgroundColor: '#000000',
@@ -595,21 +611,31 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     padding: 20,
-    minHeight: 400,
   },
   contentTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#000000',
-    marginBottom: 16,
+    // marginBottom: 160,
   },
   contentScroll: {
-    maxHeight: 350,
+    // maxHeight: 350,
   },
   contentText: {
     fontSize: 14,
     color: '#666666',
+    lineHeight: 20,
+  },
+  boldText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000000',
     lineHeight: 22,
+    marginTop: 4,
+    // marginBottom: 4,
+  },
+  textLineContainer: {
+    // marginBottom: 4,
   },
   linksSection: {
     padding: 20,
@@ -621,7 +647,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#000000',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   linksGrid: {
     flexDirection: 'row',
@@ -643,55 +669,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginTop: 8,
   },
-  acceptanceSection: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  acceptanceTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 16,
-  },
-  acceptAllCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  acceptAllLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#666666',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
-  },
-  acceptAllTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 2,
-  },
-  acceptAllSubtitle: {
-    fontSize: 12,
-    color: '#666666',
-  },
+
   toggleSection: {
     gap: 16,
     marginBottom: 24,
